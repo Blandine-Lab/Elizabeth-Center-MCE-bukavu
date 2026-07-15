@@ -85,7 +85,8 @@ app.get('/api/public-jobs', async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   const frontendBuildPath = path.join(__dirname, '../frontend/build');
   app.use(express.static(frontendBuildPath));
-  app.get('*', (req, res) => {
+  // ✅ Correction du wildcard pour Express 5
+  app.get('/(.*)', (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
 }
