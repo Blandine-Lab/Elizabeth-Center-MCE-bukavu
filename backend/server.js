@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // ✅ AJOUT
 const pool = require('./config/db');
 
 const app = express();
@@ -50,7 +51,7 @@ app.use('/api/admin/patients', require('./routes/admin/patients'));
 app.use('/api/admin/jobs', require('./routes/admin/jobs'));
 app.use('/api/admin/results', require('./routes/admin/results'));
 app.use('/api/admin/applications', require('./routes/admin/applications'));
-app.use('/api/admin/appointments', require('./routes/admin/appointments')); // ✅ AJOUT ICI
+app.use('/api/admin/appointments', require('./routes/admin/appointments'));
 
 // ✅ Alias pour que le frontend utilise /api/availabilities
 app.use('/api/availabilities', require('./routes/availability'));
@@ -79,6 +80,15 @@ app.get('/api/public-jobs', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ========== SERVIR LE FRONTEND EN PRODUCTION ==========
+if (process.env.NODE_ENV === 'production') {
+  const frontendBuildPath = path.join(__dirname, '../frontend/build');
+  app.use(express.static(frontendBuildPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+  });
+}
 
 // Middleware d'erreur (à garder à la fin)
 app.use((err, req, res, next) => {
