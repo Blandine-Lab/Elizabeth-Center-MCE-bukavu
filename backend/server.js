@@ -2,7 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // ✅ AJOUT
+const path = require('path');
 const pool = require('./config/db');
 
 const app = express();
@@ -85,8 +85,8 @@ app.get('/api/public-jobs', async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   const frontendBuildPath = path.join(__dirname, '../frontend/build');
   app.use(express.static(frontendBuildPath));
-  // ✅ Correction du wildcard pour Express 5
-  app.get('/(.*)', (req, res) => {
+  // ✅ Syntaxe correcte pour Express 5 – wildcard nommé
+  app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
 }
