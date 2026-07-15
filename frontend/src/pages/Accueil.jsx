@@ -421,7 +421,7 @@ function Accueil() {
 
       {/* Services */}
       <section id="services" className="services-section">
-        <video autoPlay muted loop playsInline className="video-background"><source src="/videos/VIDEO1.mp4" type="video/mp4" /></video>
+        <video autoPlay muted loop playsInline className="video-background"><source src="/videos/video1.mp4" type="video/mp4" /></video>
         <div className="overlay-dark"></div>
         <div className="container">
           <h2 className="section-title">Soins d'excellence au MCE</h2>
@@ -438,7 +438,7 @@ function Accueil() {
       {/* Médecins */}
       <section id="doctors" style={{ position: 'relative', overflow: 'hidden' }}>
         <video autoPlay muted loop playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}>
-          <source src="/videos/VIDEO5.mp4" type="video/mp4" />
+          <source src="/videos/video6.mp4" type="video/mp4" />
         </video>
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.55)', zIndex: 1 }}></div>
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
