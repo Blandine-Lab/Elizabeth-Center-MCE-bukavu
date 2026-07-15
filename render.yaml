@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: medical-center-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REACT_APP_API_URL
+        value: /api
+    healthCheckPath: /api/health
