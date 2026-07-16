@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/db'); // ✅ chemin corrigé
+const pool = require('../config/db');
+const { sendCandidateConfirmation, sendAdminAlert } = require('../config/email');
 
 router.post('/', async (req, res) => {
   try {
@@ -10,6 +11,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Champs obligatoires manquants' });
     }
 
+    // Enregistrement en base
     const result = await pool.query(
       `INSERT INTO applications 
        (job_id, job_title, full_name, email, phone, message, cv_url, applied_date, status)
@@ -17,6 +19,13 @@ router.post('/', async (req, res) => {
        RETURNING *`,
       [jobId, jobTitle, fullName, email, phone || '', message || '', cvUrl]
     );
+
+    // Envoi des emails en arrière-plan (ne pas bloquer la réponse)
+    // On utilise Promise.allSettled pour ne pas échouer si un email plante
+    Promise.allSettled([
+      sendCandidateConfirmation(email, fullName, jobTitle),
+      sendAdminAlert(fullName, email, jobTitle, cvUrl),
+    ]);
 
     res.status(201).json({
       success: true,

@@ -1,57 +1,51 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
+const nodemailer = require('nodemailer');
 
-// POST /api/newsletter/subscribe
-router.post('/subscribe', async (req, res) => {
+// Utiliser le même transporteur que précédemment
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
+
+// Route pour envoyer la newsletter
+router.post('/send', async (req, res) => {
   try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email requis' });
+    const { subject, content } = req.body;
+
+    // Récupérer tous les abonnés actifs
+    const subscribers = await pool.query('SELECT email FROM newsletter_subscribers WHERE active = true');
+
+    if (subscribers.rows.length === 0) {
+      return res.status(400).json({ error: 'Aucun abonné actif' });
     }
-    
-    const result = await pool.query(
-      `INSERT INTO newsletter_subscribers (email, created_at)
-       VALUES ($1, NOW())
-       ON CONFLICT (email) DO NOTHING
-       RETURNING *`,
-      [email]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(409).json({ error: 'Email déjà inscrit' });
-    }
-    
-    res.status(201).json({ message: 'Inscription réussie', subscriber: result.rows[0] });
+
+    const emails = subscribers.rows.map(row => row.email);
+
+    // Envoyer à tous (en batch)
+    const mailOptions = {
+      from: `"Medical Center Elizabeth" <${process.env.SMTP_FROM_EMAIL}>`,
+      bcc: emails.join(','), // BCC pour cacher les adresses
+      subject: subject,
+      html: content,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ success: true, message: `Newsletter envoyée à ${emails.length} abonnés` });
   } catch (err) {
-    console.error('Erreur /newsletter/subscribe :', err.message);
+    console.error('Erreur envoi newsletter :', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/newsletter/count
-router.get('/count', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT COUNT(*) as count FROM newsletter_subscribers');
-    res.json({ count: parseInt(result.rows[0].count) });
-  } catch (err) {
-    console.error('Erreur /newsletter/count :', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/newsletter/list (admin)
-router.get('/list', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM newsletter_subscribers ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Erreur /newsletter/list :', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
+// Autres routes (subscribe, unsubscribe, count, export)
+// ...
 
 module.exports = router;
