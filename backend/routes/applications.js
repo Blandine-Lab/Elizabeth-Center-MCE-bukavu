@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../config/db');
 const nodemailer = require('nodemailer');
 
-// ===== CONFIGURATION EMAIL (intégrée) =====
+// ===== CONFIGURATION EMAIL (SendGrid) =====
 const {
   EMAIL_HOST,
   EMAIL_PORT,
@@ -31,6 +31,9 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false,
   },
+  // Augmenter le timeout pour éviter les erreurs
+  connectionTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 /**
