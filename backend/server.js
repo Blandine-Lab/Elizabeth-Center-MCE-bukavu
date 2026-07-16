@@ -89,7 +89,6 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(frontendBuildPath));
 
   // ✅ Correction pour Express 5 : utiliser /(.*) à la place de *
-  // Voir : https://expressjs.com/en/guide/migrating-5.html#path-syntax
   app.get('/(.*)', (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
