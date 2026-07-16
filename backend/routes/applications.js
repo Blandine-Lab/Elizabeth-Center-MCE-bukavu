@@ -7,7 +7,10 @@ router.post('/', async (req, res) => {
   try {
     const { jobId, jobTitle, fullName, email, phone, message, cvUrl } = req.body;
 
+    console.log('📝 Nouvelle candidature reçue:', { jobId, jobTitle, fullName, email });
+
     if (!jobId || !fullName || !email || !cvUrl) {
+      console.warn('⚠️ Champs obligatoires manquants');
       return res.status(400).json({ error: 'Champs obligatoires manquants' });
     }
 
@@ -20,19 +23,32 @@ router.post('/', async (req, res) => {
       [jobId, jobTitle, fullName, email, phone || '', message || '', cvUrl]
     );
 
-    // Envoi des emails en arrière-plan (ne pas bloquer la réponse)
-    // On utilise Promise.allSettled pour ne pas échouer si un email plante
+    console.log('✅ Candidature enregistrée en base, ID:', result.rows[0].id);
+
+    // Envoi des emails en arrière-plan
+    console.log('📧 Tentative d\'envoi d\'emails...');
+    console.log('📧 EMAIL_FROM:', process.env.EMAIL_FROM || '❌ NON DÉFINI');
+    console.log('📧 ADMIN_EMAIL:', process.env.ADMIN_EMAIL || '❌ NON DÉFINI');
+
     Promise.allSettled([
       sendCandidateConfirmation(email, fullName, jobTitle),
       sendAdminAlert(fullName, email, jobTitle, cvUrl),
-    ]);
+    ]).then(results => {
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          console.log(`✅ Email ${index + 1} envoyé avec succès:`, result.value);
+        } else {
+          console.error(`❌ Email ${index + 1} échoué:`, result.reason);
+        }
+      });
+    });
 
     res.status(201).json({
       success: true,
       application: result.rows[0]
     });
   } catch (err) {
-    console.error('Erreur enregistrement candidature :', err);
+    console.error('❌ Erreur enregistrement candidature :', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
