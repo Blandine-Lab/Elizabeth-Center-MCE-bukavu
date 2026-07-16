@@ -13,6 +13,18 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
+// ========== ROUTE DE VÉRIFICATION ADMIN ==========
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '@@Mpombo21262578@@@@19';
+
+app.post('/api/verify-admin', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    res.json({ valid: true });
+  } else {
+    res.status(401).json({ valid: false });
+  }
+});
+
 // Routes de test
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

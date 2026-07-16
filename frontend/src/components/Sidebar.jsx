@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
-// 🔑 Mot de passe pour accéder à l'administration
-const ADMIN_PASSWORD = '@@Mpombo21262578@@@@19';
+// ⚠️ Plus de mot de passe stocké ici !
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 function Sidebar({ isOpen, toggleSidebar, isMobile }) {
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const menuItems = [
     { path: '/', label: '🏠 Accueil', icon: 'fas fa-home' },
@@ -39,8 +40,7 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
     boxShadow: '2px 0 12px rgba(0,0,0,0.08)'
   };
 
-  const handleHomeClick = (e) => {
-    // Empêcher la navigation par défaut du Link vers '/'
+  const handleHomeClick = async (e) => {
     e.preventDefault();
 
     if (isMobile && toggleSidebar) toggleSidebar();
@@ -50,19 +50,38 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
 
     if (newCount === 6) {
       const password = window.prompt('🔐 Entrez le mot de passe administrateur :');
-      if (password === ADMIN_PASSWORD) {
-        console.log('✅ Mot de passe correct, redirection vers /admin');
-        // Redirection forcée via window.location (plus fiable)
-        window.location.href = '/admin';
+      if (password === null) {
         setClickCount(0);
-      } else {
-        if (password !== null) alert('❌ Mot de passe incorrect');
-        setClickCount(0);
-        // Retourner à l'accueil si le mot de passe est faux
         window.location.href = '/';
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_BASE}/verify-admin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.valid) {
+          console.log('✅ Mot de passe correct, redirection vers /admin');
+          window.location.href = '/admin';
+        } else {
+          alert('❌ Mot de passe incorrect');
+          window.location.href = '/';
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification :', error);
+        alert('❌ Erreur réseau, veuillez réessayer');
+        window.location.href = '/';
+      } finally {
+        setIsLoading(false);
+        setClickCount(0);
       }
     } else {
-      // Si le compteur n'est pas à 6, on navigue normalement vers l'accueil
       window.location.href = '/';
     }
   };

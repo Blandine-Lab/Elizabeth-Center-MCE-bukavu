@@ -1,14 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
-// 🔑 Mot de passe pour accéder à l'administration (identique à Sidebar)
-const ADMIN_PASSWORD = '@@Mpombo21262578@@@@19';
-
 function TopBar() {
+  const navigate = useNavigate();
   const [telephoneUrgence, setTelephoneUrgence] = useState('+33 (0)1 88 88 88 88');
   const [clickCount, setClickCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE}/site-content/topbar`)
@@ -23,28 +22,48 @@ function TopBar() {
       });
   }, []);
 
-  // Gestion du clic sur "English version" (ou tout autre élément)
-  const handleEnglishClick = (e) => {
-    e.preventDefault(); // Empêche la navigation par défaut vers "/"
+  const handleEnglishClick = async (e) => {
+    e.preventDefault();
 
     const newCount = clickCount + 1;
     setClickCount(newCount);
 
     if (newCount === 6) {
       const password = window.prompt('🔐 Entrez le mot de passe administrateur :');
-      if (password === ADMIN_PASSWORD) {
-        console.log('✅ Mot de passe correct, redirection vers /admin');
-        window.location.href = '/admin';
+      if (password === null) {
         setClickCount(0);
-      } else {
-        if (password !== null) alert('❌ Mot de passe incorrect');
+        navigate('/'); // retour à l'accueil sans recharger
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_BASE}/verify-admin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.valid) {
+          console.log('✅ Mot de passe correct, redirection vers /admin');
+          window.location.href = '/admin'; // rechargement forcé pour reset l'état
+        } else {
+          alert('❌ Mot de passe incorrect');
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification :', error);
+        alert('❌ Erreur réseau, veuillez réessayer');
+        navigate('/');
+      } finally {
+        setIsLoading(false);
         setClickCount(0);
-        // Rediriger vers l'accueil si le mot de passe est faux
-        window.location.href = '/';
       }
     } else {
-      // Si le compteur n'est pas à 6, naviguer normalement vers l'accueil
-      window.location.href = '/';
+      // Navigation vers l'accueil sans rechargement (React Router)
+      navigate('/');
     }
   };
 
@@ -52,7 +71,6 @@ function TopBar() {
     <div className="top-bar">
       <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
         <Link to="/espace-patient"><i className="fas fa-user"></i> Portail patient</Link>
-        {/* 👇 Lien modifié pour déclencher le compteur */}
         <Link to="/" onClick={handleEnglishClick}>
           <i className="fas fa-language"></i> English version
         </Link>
