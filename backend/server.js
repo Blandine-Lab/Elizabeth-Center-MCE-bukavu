@@ -88,8 +88,9 @@ if (process.env.NODE_ENV === 'production') {
   const frontendBuildPath = path.join(__dirname, '../frontend/build');
   app.use(express.static(frontendBuildPath));
 
-  // ✅ Correction : utiliser app.use au lieu de app.get pour éviter l'erreur path-to-regexp
-  app.use('*', (req, res) => {
+  // ✅ Correction pour Express 5 : utiliser /(.*) à la place de *
+  // Voir : https://expressjs.com/en/guide/migrating-5.html#path-syntax
+  app.get('/(.*)', (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
 }
