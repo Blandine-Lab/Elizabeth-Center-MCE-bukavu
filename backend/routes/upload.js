@@ -6,9 +6,17 @@ const fs = require('fs');
 
 // Dossier uploads (chemin absolu)
 const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log('📁 Dossier uploads créé');
+
+// Création du dossier avec permissions explicites
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
+    console.log('📁 Dossier uploads créé avec succès');
+  } else {
+    console.log('📁 Dossier uploads existe déjà');
+  }
+} catch (err) {
+  console.error('❌ Erreur création dossier uploads:', err);
 }
 
 // Configuration de stockage
@@ -52,12 +60,12 @@ const upload = multer({
 });
 
 // ========== ROUTE PRINCIPALE ==========
-// Accepte les champs 'file' OU 'image' (grâce à upload.any())
 router.post('/', (req, res) => {
+  // Utiliser upload.any() pour accepter 'file' ou 'image'
   upload.any()(req, res, (err) => {
     // Gestion des erreurs multer
     if (err) {
-      console.error('❌ Erreur Multer :', err);
+      console.error('❌ Erreur Multer:', err);
       return res.status(500).json({ error: err.message, stack: err.stack });
     }
 
@@ -71,7 +79,8 @@ router.post('/', (req, res) => {
       const file = req.files[0];
       const fileUrl = `/uploads/${file.filename}`;
 
-      console.log('✅ Fichier reçu :', file.originalname, '→', file.filename);
+      console.log(`✅ Fichier reçu : ${file.originalname} → ${file.filename}`);
+      console.log(`📂 Chemin complet : ${path.join(uploadDir, file.filename)}`);
 
       res.json({
         success: true,
@@ -117,7 +126,7 @@ router.post('/cv', cvUpload.single('cv'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'Aucun CV envoyé' });
     }
-    console.log('✅ CV reçu :', req.file.originalname, '→', req.file.filename);
+    console.log(`✅ CV reçu : ${req.file.originalname} → ${req.file.filename}`);
     res.json({
       success: true,
       cvUrl: `/uploads/${req.file.filename}`,
