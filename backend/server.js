@@ -1,3 +1,4 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,13 +8,10 @@ const pool = require('./config/db');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// ========== MIDDLEWARES ==========
+// Middlewares
 app.use(cors());
 app.use(express.json());
-
-// Servir les fichiers uploadés
-const uploadsPath = path.join(__dirname, 'uploads');
-app.use('/uploads', express.static(uploadsPath));
+app.use('/uploads', express.static('uploads'));
 
 // Routes de test
 app.get('/api/health', (req, res) => {
@@ -55,7 +53,7 @@ app.use('/api/admin/results', require('./routes/admin/results'));
 app.use('/api/admin/applications', require('./routes/admin/applications'));
 app.use('/api/admin/appointments', require('./routes/admin/appointments'));
 
-// ✅ Alias pour /api/availabilities
+// ✅ Alias pour que le frontend utilise /api/availabilities
 app.use('/api/availabilities', require('./routes/availability'));
 
 // ========== ROUTES MESSAGES ==========
@@ -67,7 +65,7 @@ app.use('/api/patient', require('./routes/patients'));
 // ========== ROUTES DOCTORS ==========
 app.use('/api/doctor', require('./routes/doctors'));
 
-// ========== ROUTES APPLICATIONS ==========
+// ========== ROUTES APPLICATIONS (PUBLIQUES) ==========
 app.use('/api/applications', require('./routes/applications'));
 
 // ========== ROUTE PUBLIQUE POUR LES OFFRES ==========
@@ -88,13 +86,13 @@ if (process.env.NODE_ENV === 'production') {
   const frontendBuildPath = path.join(__dirname, '../frontend/build');
   app.use(express.static(frontendBuildPath));
 
-  // ✅ Correction pour Express 5 : utiliser /(.*) à la place de *
-  app.get('/(.*)', (req, res) => {
+  // ✅ Correction pour Express 5 – wildcard nommé (sans accolades)
+  app.get('/*splat', (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
 }
 
-// Middleware d'erreur
+// Middleware d'erreur (à garder à la fin)
 app.use((err, req, res, next) => {
   console.error('💥 ERREUR:', err.stack);
   res.status(500).json({ error: err.message });
@@ -104,4 +102,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
   console.log(`📊 Test DB : http://localhost:${PORT}/api/test-db`);
+  console.log(`📋 Routes disponibles : /api/staff, /api/actualites, /api/events, /api/etablissement, /api/partenaires, /api/tarifs, /api/site-content, /api/specialties, /api/appointments, /api/paiement, /api/newsletter, /api/availability, /api/upload, /api/availabilities, /api/admin/applications, /api/admin/appointments, /api/messages, /api/patient, /api/doctor, /api/public-jobs, /api/applications`);
 });
