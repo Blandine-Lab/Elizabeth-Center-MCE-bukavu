@@ -3,4 +3,4 @@ node_modules/
 uploads/
 build/
 .DS_Store
-*.log
+*.log"backend/test-email.js" 
