@@ -52,6 +52,8 @@ app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/paiement', require('./routes/paiement'));
 app.use('/api/paiements', require('./routes/paiement'));
 app.use('/api/newsletter', require('./routes/newsletter'));
+// ========== ROUTES CHECKUP ==========
+app.use('/api/checkup-requests', require('./routes/checkup'));
 app.use('/api/availability', require('./routes/availability'));
 
 // ========== ROUTE UPLOAD ==========
