@@ -30,6 +30,8 @@ function AdminDashboard() {
     const [footerContent, setFooterContent] = useState({});
     const [paymentConfig, setPaymentConfig] = useState({});
     const [paiementsManuels, setPaiementsManuels] = useState([]);
+    // 👇 NOUVEL ÉTAT POUR LES MESSAGES
+    const [messages, setMessages] = useState([]);
     
     // États pour les formulaires et modales
     const [showJobForm, setShowJobForm] = useState(false);
@@ -69,7 +71,7 @@ function AdminDashboard() {
         setTimeout(() => setSuccessMsg(""), 3000);
     }
     
-    // ========== CHARGEMENT DES DONNÉES (inchangé) ==========
+    // ========== CHARGEMENT DES DONNÉES ==========
     const loadAppointments = async () => {
         try {
             const res = await fetch(`${API_BASE}/appointments?_=${Date.now()}`);
@@ -311,6 +313,19 @@ function AdminDashboard() {
         } catch (err) { console.error('loadSlots:', err); setAvailableSlots([]); }
     };
     
+    // 👇 NOUVELLE FONCTION DE CHARGEMENT DES MESSAGES
+    const loadMessages = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/messages`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setMessages(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('loadMessages:', err);
+            setMessages([]);
+        }
+    };
+    
     // ========== SUPPRESSIONS (inchangées) ==========
     const deleteAppointment = async (id) => {
         if (!window.confirm("Supprimer ce rendez-vous ?")) return;
@@ -400,7 +415,7 @@ function AdminDashboard() {
         } catch (err) { console.error('deletePartenaire:', err); }
     };
     
-    // ========== VALIDATION TÉLÉCONSULTATION (inchangée) ==========
+    // ========== VALIDATION TÉLÉCONSULTATION ==========
     const validateTeleconsultation = async (id) => {
         if (!window.confirm("Valider cette téléconsultation ?")) return;
         try {
@@ -412,7 +427,7 @@ function AdminDashboard() {
         } catch (err) { console.error('validateTeleconsultation:', err); }
     };
     
-    // ========== RÉINITIALISATION MOT DE PASSE MÉDECIN (inchangée) ==========
+    // ========== RÉINITIALISATION MOT DE PASSE MÉDECIN ==========
     const resetDoctorPassword = async (id) => {
         const newPassword = window.prompt('Entrez le nouveau mot de passe pour ce médecin (6 caractères min) :');
         if (newPassword === null) return;
@@ -438,7 +453,7 @@ function AdminDashboard() {
         }
     };
     
-    // ========== AJOUTS (inchangés) ==========
+    // ========== AJOUTS ==========
     const addJob = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -751,7 +766,7 @@ function AdminDashboard() {
         } catch (err) { console.error('markAppointmentAsViewed:', err); }
     };
     
-    // ========== ÉDITION PATIENT (inchangée) ==========
+    // ========== ÉDITIONS ==========
     const updatePatient = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -777,7 +792,6 @@ function AdminDashboard() {
         } catch (err) { console.error('updatePatient:', err); }
     };
     
-    // ========== ÉDITION MÉDECIN (avec gestion photo) ==========
     const updateDoctor = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -790,7 +804,7 @@ function AdminDashboard() {
         const active = formData.get("active") === "on" ? 1 : 0;
         const telegram_chat_id = formData.get("telegram_chat_id") || null;
 
-        let photo_url = editingDoctor.photo_url; // on garde l'ancienne par défaut
+        let photo_url = editingDoctor.photo_url;
         const photoFile = formData.get("photo");
         if (photoFile && photoFile.size > 0) {
             const fd = new FormData();
@@ -845,14 +859,13 @@ function AdminDashboard() {
         }
     };
     
-    // ========== ÉDITION ACTUALITÉ (avec gestion photo) ==========
     const updateActualite = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const titre = formData.get("titre");
         const description = formData.get("description");
         const active = formData.get("active") === "on" ? 1 : 0;
-        let image_url = editingActu.image_url; // ancienne par défaut
+        let image_url = editingActu.image_url;
         const imageFile = formData.get("imageFile");
         if (imageFile && imageFile.size > 0) {
             const fd = new FormData();
@@ -894,7 +907,6 @@ function AdminDashboard() {
         }
     };
     
-    // ========== ÉDITION ÉTABLISSEMENT (photo) ==========
     const updateEtablissement = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -943,7 +955,6 @@ function AdminDashboard() {
         }
     };
     
-    // ========== ÉDITION PARTENAIRE (logo) ==========
     const updatePartenaire = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -993,7 +1004,6 @@ function AdminDashboard() {
         }
     };
     
-    // ========== BASCULE STATUT PATIENT (inchangée) ==========
     const togglePatientStatus = async (patient) => {
         const newStatus = patient.is_active ? 0 : 1;
         try {
@@ -1009,7 +1019,7 @@ function AdminDashboard() {
         } catch (err) { console.error('togglePatientStatus:', err); }
     };
     
-    // ========== ONGLETS (inchangés) ==========
+    // ========== ONGLETS ==========
     const tabs = [
         { id: "rdv", label: "Rendez-vous" },
         { id: "calendar", label: "Calendrier" },
@@ -1030,10 +1040,12 @@ function AdminDashboard() {
         { id: "caisse", label: "Caisse" },
         { id: "results", label: "Résultats labo" },
         { id: "patients", label: "Patients" },
-        { id: "paiements-manuels", label: "Paiements manuels" }
+        { id: "paiements-manuels", label: "Paiements manuels" },
+        // 👇 NOUVEL ONGLET
+        { id: "messages", label: "📩 Messages" }
     ];
     
-    // Chargement initial (inchangé)
+    // ========== CHARGEMENT INITIAL ==========
     useEffect(() => {
         loadAppointments();
         loadDoctors();
@@ -1055,9 +1067,11 @@ function AdminDashboard() {
         loadContent("home");
         loadDoctorsForSelect();
         loadPaiementsManuels();
+        // 👇 CHARGEMENT DES MESSAGES
+        loadMessages();
     }, []);
     
-    // Rechargement lors du changement d'onglet (inchangé)
+    // ========== RECHARGEMENT AU CHANGEMENT D'ONGLET ==========
     useEffect(() => {
         if (activeTab === "manage") { loadAvailabilities(); loadDoctorsForSelect(); }
         if (activeTab === "doctors") loadDoctors();
@@ -1077,6 +1091,8 @@ function AdminDashboard() {
         if (activeTab === "stats") loadStats();
         if (activeTab === "calendar") loadAvailabilities();
         if (activeTab === "paiements-manuels") loadPaiementsManuels();
+        // 👇 RECHARGEMENT DES MESSAGES
+        if (activeTab === "messages") loadMessages();
     }, [activeTab]);
     
     // ========== RENDU JSX ==========
@@ -1087,7 +1103,7 @@ function AdminDashboard() {
             React.createElement("div", { key: tab.id, onClick: () => setActiveTab(tab.id), style: { padding: "10px 20px", cursor: "pointer", background: activeTab === tab.id ? "#0b6e8f" : "#e9ecef", color: activeTab === tab.id ? "white" : "#666", borderRadius: "8px 8px 0 0" } }, tab.label)
         )),
         
-        // ===== RENDEZ-VOUS (inchangé) =====
+        // ===== RENDEZ-VOUS =====
         activeTab === "rdv" && React.createElement("div", null,
             React.createElement("h2", null, "📋 Rendez-vous"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -1124,7 +1140,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== CALENDRIER (inchangé) =====
+        // ===== CALENDRIER =====
         activeTab === "calendar" && React.createElement("div", null,
             React.createElement("h2", null, "📅 Calendrier des disponibilités"),
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "15px" } },
@@ -1142,7 +1158,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== CANDIDATURES (inchangé) =====
+        // ===== CANDIDATURES =====
         activeTab === "applications" && React.createElement("div", null,
             React.createElement("h2", null, "📋 Candidatures reçues"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -1177,7 +1193,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== STATISTIQUES (inchangé) =====
+        // ===== STATISTIQUES =====
         activeTab === "stats" && React.createElement("div", null,
             React.createElement("h2", null, "📊 Statistiques"),
             React.createElement("div", { style: { display: "flex", gap: "20px", flexWrap: "wrap" } },
@@ -1202,7 +1218,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== OFFRES D'EMPLOI (inchangé) =====
+        // ===== OFFRES D'EMPLOI =====
         activeTab === "jobs" && React.createElement("div", null,
             React.createElement("h2", null, "💼 Offres d'emploi"),
             React.createElement("button", { onClick: () => setShowJobForm(!showJobForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showJobForm ? "-" : "+", " Ajouter"),
@@ -1243,7 +1259,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== DISPONIBILITÉS (inchangé) =====
+        // ===== DISPONIBILITÉS =====
         activeTab === "manage" && React.createElement("div", null,
             React.createElement("h3", null, "Gestion des disponibilités"),
             React.createElement("button", { onClick: () => setShowAvailabilityForm(!showAvailabilityForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showAvailabilityForm ? "-" : "+", " Ajouter créneau"),
@@ -1280,7 +1296,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MÉDECINS (avec bouton édition et modale) =====
+        // ===== MÉDECINS =====
         activeTab === "doctors" && React.createElement("div", null,
             React.createElement("h3", null, "➕ Ajouter un médecin"),
             React.createElement("form", { onSubmit: async (e) => {
@@ -1421,7 +1437,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== ÉVÉNEMENTS (inchangé) =====
+        // ===== ÉVÉNEMENTS =====
         activeTab === "events" && React.createElement("div", null,
             React.createElement("h3", null, "➕ Ajouter un événement"),
             React.createElement("form", { onSubmit: addEvent, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
@@ -1457,7 +1473,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== CONTENU DU SITE (inchangé) =====
+        // ===== CONTENU DU SITE =====
         activeTab === "content" && React.createElement("div", null,
             React.createElement("h2", null, "✏️ Contenu du site"),
             React.createElement("select", { value: selectedPage, onChange: e => { setSelectedPage(e.target.value); loadContent(e.target.value); }, style: { padding: "8px", marginBottom: "20px", borderRadius: "8px" } },
@@ -1493,7 +1509,7 @@ function AdminDashboard() {
             }, style: { background: "#0b6e8f", color: "white", border: "none", padding: "10px 20px", borderRadius: "25px", cursor: "pointer" } }, "Enregistrer")
         ),
         
-        // ===== ACTUALITÉS (avec bouton édition et modale) =====
+        // ===== ACTUALITÉS =====
         activeTab === "actualites" && React.createElement("div", null,
             React.createElement("h2", null, "Actualités"),
             React.createElement("button", { onClick: () => setShowActuForm(!showActuForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showActuForm ? "-" : "+", " Ajouter"),
@@ -1572,7 +1588,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== SPÉCIALITÉS (inchangé) =====
+        // ===== SPÉCIALITÉS =====
         activeTab === "specialties" && React.createElement("div", null,
             React.createElement("h2", null, "Spécialités"),
             React.createElement("button", { onClick: () => setShowSpecialtyForm(!showSpecialtyForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showSpecialtyForm ? "-" : "+", " Ajouter"),
@@ -1604,7 +1620,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== ÉTABLISSEMENT (avec bouton édition et modale) =====
+        // ===== ÉTABLISSEMENT =====
         activeTab === "etablissement" && React.createElement("div", null,
             React.createElement("h2", null, "🏥 Gestion des photos de l'établissement"),
             React.createElement("form", { onSubmit: async (e) => {
@@ -1685,7 +1701,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== PARTENAIRES (avec bouton édition et modale) =====
+        // ===== PARTENAIRES =====
         activeTab === "partenaires" && React.createElement("div", null,
             React.createElement("h2", null, "🤝 Gestion des partenaires"),
             React.createElement("form", { onSubmit: async (e) => {
@@ -1771,7 +1787,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== NEWSLETTER (inchangé) =====
+        // ===== NEWSLETTER =====
         activeTab === "newsletter" && React.createElement("div", null,
             React.createElement("h2", null, "📧 Newsletter"),
             React.createElement("p", null, "Total abonnés actifs : ", React.createElement("strong", null, newsletterCount)),
@@ -1784,7 +1800,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== FOOTER (inchangé) =====
+        // ===== FOOTER =====
         activeTab === "footer" && React.createElement("div", null,
             React.createElement("h2", null, "✏️ Gestion du pied de page (multi-colonnes)"),
             React.createElement("form", { onSubmit: saveFooter, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px" } },
@@ -1830,7 +1846,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== TARIFS (inchangé) =====
+        // ===== TARIFS =====
         activeTab === "tarifs" && React.createElement("div", null,
             React.createElement("h2", null, "💰 Gestion des tarifs"),
             React.createElement("form", { onSubmit: addTarif, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
@@ -1864,7 +1880,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== CAISSE (inchangé) =====
+        // ===== CAISSE =====
         activeTab === "caisse" && React.createElement("div", null,
             React.createElement("h2", null, "💰 Historique des paiements"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -1900,7 +1916,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== PAIEMENTS MANUELS (inchangé) =====
+        // ===== PAIEMENTS MANUELS =====
         activeTab === "paiements-manuels" && React.createElement("div", null,
             React.createElement("h2", null, "📋 Demandes de paiement manuel"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -1942,7 +1958,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== RÉSULTATS LABO (inchangé) =====
+        // ===== RÉSULTATS LABO =====
         activeTab === "results" && React.createElement("div", null,
             React.createElement("h2", null, "🔬 Résultats en attente de publication"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -1979,7 +1995,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== PATIENTS (inchangé) =====
+        // ===== PATIENTS =====
         activeTab === "patients" && React.createElement("div", null,
             React.createElement("h2", null, "👥 Gestion des patients"),
             React.createElement("button", { onClick: () => setShowPatientForm(!showPatientForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showPatientForm ? "-" : "+", " Ajouter"),
@@ -2032,7 +2048,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MODALE ÉDITION PATIENT (inchangé) =====
+        // ===== MODALE ÉDITION PATIENT =====
         editingPatient && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 } },
             React.createElement("div", { style: { background: "white", padding: "20px", borderRadius: "16px", maxWidth: "500px", width: "90%" } },
                 React.createElement("h3", null, "Modifier le patient"),
@@ -2050,6 +2066,37 @@ function AdminDashboard() {
                         React.createElement("button", { type: "button", onClick: () => setEditingPatient(null), style: { background: "#6c757d", color: "white", padding: "8px 16px", border: "none", borderRadius: "20px" } }, "Annuler"),
                         React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", padding: "8px 16px", border: "none", borderRadius: "20px" } }, "Enregistrer")
                     )
+                )
+            )
+        ),
+        
+        // 👇 NOUVEL ONGLET : MESSAGES
+        activeTab === "messages" && React.createElement("div", null,
+            React.createElement("h2", null, "📩 Messages reçus"),
+            React.createElement("div", { style: { overflowX: "auto" } },
+                React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+                    React.createElement("thead", null,
+                        React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
+                            React.createElement("th", null, "ID"),
+                            React.createElement("th", null, "Expéditeur"),
+                            React.createElement("th", null, "Nom"),
+                            React.createElement("th", null, "Sujet"),
+                            React.createElement("th", null, "Message"),
+                            React.createElement("th", null, "Date"),
+                            React.createElement("th", null, "Lu")
+                        )
+                    ),
+                    React.createElement("tbody", null, messages.map(msg =>
+                        React.createElement("tr", { key: msg.id },
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, msg.id),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(msg.sender_type)),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(msg.sender_name || "Anonyme")),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(msg.subject || "-")),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd", maxWidth: "200px", wordWrap: "break-word" } }, escapeHtml(msg.message)),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, new Date(msg.sent_date).toLocaleString()),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, msg.is_read ? "✅" : "❌")
+                        )
+                    ))
                 )
             )
         ),
