@@ -1,71 +1,58 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
-// ===== CONFIGURATION EMAIL (SendGrid) =====
+// ===== CONFIGURATION API BREVO =====
 const {
-  EMAIL_HOST,
-  EMAIL_PORT,
-  EMAIL_USER,
-  EMAIL_PASS,
+  BREVO_API_KEY,
   EMAIL_FROM,
   ADMIN_EMAIL
 } = process.env;
 
-console.log('📧 Configuration email chargée:');
-console.log('   EMAIL_HOST:', EMAIL_HOST || '❌ NON DÉFINI');
-console.log('   EMAIL_USER:', EMAIL_USER || '❌ NON DÉFINI');
+console.log('📧 Configuration Brevo API chargée:');
+console.log('   BREVO_API_KEY:', BREVO_API_KEY ? '✅ Défini' : '❌ NON DÉFINI');
 console.log('   EMAIL_FROM:', EMAIL_FROM || '❌ NON DÉFINI');
-console.log('   EMAIL_PORT:', EMAIL_PORT || '❌ NON DÉFINI');
-
-// Création du transporteur SMTP
-const transporter = nodemailer.createTransport({
-  host: EMAIL_HOST,
-  port: Number(EMAIL_PORT) || 587,
-  secure: Number(EMAIL_PORT) === 465,
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  // Augmenter le timeout pour éviter les erreurs
-  connectionTimeout: 10000,
-  socketTimeout: 10000,
-});
 
 /**
- * Fonction d'envoi d'email
+ * Envoyer un email via l'API Brevo
  */
-async function sendEmail({ to, subject, html, text }) {
-  if (!transporter.options.auth.user || !transporter.options.auth.pass) {
-    console.warn('❌ Email non configuré – message non envoyé');
-    return { success: false, error: 'Email service not configured' };
+async function sendEmailBrevo({ to, subject, html, text }) {
+  if (!BREVO_API_KEY) {
+    console.warn('❌ Clé API Brevo non configurée');
+    return { success: false, error: 'BREVO_API_KEY not configured' };
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Medical Center Elizabeth" <${EMAIL_FROM}>`,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>?/gm, ''),
+    const response = await axios({
+      method: 'POST',
+      url: 'https://api.brevo.com/v3/smtp/email',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        sender: {
+          name: 'Medical Center Elizabeth',
+          email: EMAIL_FROM,
+        },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html,
+        textContent: text || html.replace(/<[^>]*>?/gm, ''),
+      },
+      timeout: 15000,
     });
-    console.log(`✅ Email envoyé à ${to} – ID: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+
+    console.log(`✅ Email envoyé à ${to} – ID: ${response.data.messageId}`);
+    return { success: true, messageId: response.data.messageId };
   } catch (error) {
-    console.error('❌ Erreur envoi email:', error.message);
-    console.error('   Code:', error.code);
-    console.error('   Response:', error.response);
+    console.error('❌ Erreur envoi email via Brevo API:', error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 }
 
-/**
- * ✅ Email de confirmation au candidat
- */
+// ===== FONCTIONS D'ENVOI =====
 async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
   console.log(`📧 Envoi confirmation à ${candidateEmail}...`);
   const subject = `✅ Confirmation de votre candidature – Medical Center Elizabeth`;
@@ -95,12 +82,9 @@ async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
       </div>
     </div>
   `;
-  return sendEmail({ to: candidateEmail, subject, html });
+  return sendEmailBrevo({ to: candidateEmail, subject, html });
 }
 
-/**
- * 📩 Email de notification à l'administrateur
- */
 async function sendAdminAlert(fullName, email, jobTitle, cvUrl, phone, message) {
   console.log(`📧 Envoi notification admin...`);
   const subject = `📩 Nouvelle candidature – ${jobTitle}`;
@@ -130,7 +114,7 @@ async function sendAdminAlert(fullName, email, jobTitle, cvUrl, phone, message) 
       </div>
     </div>
   `;
-  return sendEmail({ to: ADMIN_EMAIL || EMAIL_FROM, subject, html });
+  return sendEmailBrevo({ to: ADMIN_EMAIL || EMAIL_FROM, subject, html });
 }
 
 // ===== ROUTE PRINCIPALE =====
@@ -145,7 +129,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Champs obligatoires manquants' });
     }
 
-    // Enregistrement en base
     const result = await pool.query(
       `INSERT INTO applications 
        (job_id, job_title, full_name, email, phone, message, cv_url, applied_date, status)
@@ -156,8 +139,7 @@ router.post('/', async (req, res) => {
 
     console.log('✅ Candidature enregistrée en base, ID:', result.rows[0].id);
 
-    // Envoi des emails en arrière-plan
-    console.log('📧 Tentative d\'envoi d\'emails...');
+    console.log('📧 Tentative d\'envoi d\'emails via Brevo API...');
 
     const emailResults = await Promise.allSettled([
       sendCandidateConfirmation(email, fullName, jobTitle),
