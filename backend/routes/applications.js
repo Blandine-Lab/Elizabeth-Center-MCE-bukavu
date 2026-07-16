@@ -58,8 +58,10 @@ async function sendEmailBrevo({ to, subject, html, text }) {
 }
 
 // ============================================================
-// 3. TEMPLATES D'EMAILS (inchangés)
+// 3. TEMPLATES D'EMAILS
 // ============================================================
+
+// --- Email de confirmation au CANDIDAT (AVEC MESSAGE DE SÉCURITÉ ET LIEN SITE) ---
 async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
   console.log(`📧 Envoi confirmation à ${candidateEmail}...`);
 
@@ -80,6 +82,29 @@ async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
         <p style="font-size: 16px; line-height: 1.6; color: #333;">
           Notre équipe RH l'examine avec attention. Nous reviendrons vers vous dans les plus brefs délais.
         </p>
+
+        <!-- ⚠️ MESSAGE DE SÉCURITÉ -->
+        <div style="background: #fff8e7; padding: 20px; border-radius: 8px; border-left: 5px solid #f5a623; margin: 25px 0;">
+          <p style="font-size: 15px; line-height: 1.6; color: #333; margin: 0;">
+            <strong>🔐 Information importante :</strong><br>
+            Nous tenons à vous rassurer : <strong>nous ne demandons jamais d'argent à nos candidats</strong> et 
+            nous ne vous contacterons jamais via des numéros non officiels. 
+            Toutes nos communications se font par email officiel ou via nos numéros de téléphone certifiés.
+          </p>
+          <p style="font-size: 15px; line-height: 1.6; color: #333; margin: 10px 0 0 0;">
+            En attendant, nous vous invitons à consulter régulièrement notre site web pour découvrir 
+            nos prochaines actions dédiées au meilleur de votre santé.
+          </p>
+        </div>
+
+        <!-- LIEN DU SITE -->
+        <div style="text-align: center; margin: 20px 0 10px 0;">
+          <a href="https://www.medicalcenterelizabeth.org" 
+             style="color: #0a4b7a; font-size: 16px; font-weight: bold; text-decoration: underline;">
+            🌐 www.medicalcenterelizabeth.org
+          </a>
+        </div>
+
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
           <p style="font-size: 14px; color: #777;">Bien cordialement,<br><strong>Medical Center Elizabeth</strong></p>
         </div>
@@ -90,6 +115,7 @@ async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
   return sendEmailBrevo({ to: candidateEmail, subject, html });
 }
 
+// --- Email de notification à l'ADMIN ---
 async function sendAdminAlert(fullName, email, phone, jobTitle, message, cvUrl) {
   console.log(`📧 Envoi notification admin...`);
 
@@ -116,7 +142,7 @@ async function sendAdminAlert(fullName, email, phone, jobTitle, message, cvUrl) 
 }
 
 // ============================================================
-// 4. ROUTE PRINCIPALE : DÉPÔT DE CANDIDATURE (inchangée)
+// 4. ROUTE PRINCIPALE : DÉPÔT DE CANDIDATURE
 // ============================================================
 router.post('/', async (req, res) => {
   try {
