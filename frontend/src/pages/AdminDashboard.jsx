@@ -29,8 +29,6 @@ function AdminDashboard() {
     const [siteContent, setSiteContent] = useState({});
     const [footerContent, setFooterContent] = useState({});
     const [paymentConfig, setPaymentConfig] = useState({});
-    
-    // ✅ NOUVEAU : État pour les paiements manuels
     const [paiementsManuels, setPaiementsManuels] = useState([]);
     
     // États pour les formulaires et modales
@@ -249,7 +247,6 @@ function AdminDashboard() {
         } catch (err) { console.error('loadPaymentConfig:', err); }
     };
     
-    // ✅ NOUVEAU : Charger les paiements manuels
     const loadPaiementsManuels = async () => {
         try {
             const res = await fetch(`${API_BASE}/paiement/manuels`);
@@ -768,7 +765,7 @@ function AdminDashboard() {
             phone: formData.get("phone") || "",
             photo_url: editingDoctor.photo_url || null,
             telegram_chat_id: formData.get("telegram_chat_id") || null,
-            active: formData.get("active") === "on" ? 1 : 0,   // ✅ CORRECTION : active au lieu de is_active
+            active: formData.get("active") === "on" ? 1 : 0,
             password: formData.get("password") || undefined
         };
         try {
@@ -781,8 +778,14 @@ function AdminDashboard() {
                 showSuccess("Médecin mis à jour");
                 loadDoctors();
                 setEditingDoctor(null);
-            } else alert("Erreur");
-        } catch (err) { console.error('updateDoctor:', err); }
+            } else {
+                const errData = await res.json();
+                alert("❌ Erreur : " + (errData.error || res.statusText));
+            }
+        } catch (err) {
+            alert("❌ Erreur réseau");
+            console.error(err);
+        }
     };
     
     // ========== BASCULE STATUT PATIENT (action rapide) ==========
@@ -822,7 +825,7 @@ function AdminDashboard() {
         { id: "caisse", label: "Caisse" },
         { id: "results", label: "Résultats labo" },
         { id: "patients", label: "Patients" },
-        { id: "paiements-manuels", label: "Paiements manuels" } // ✅ NOUVEAU
+        { id: "paiements-manuels", label: "Paiements manuels" }
     ];
     
     // Chargement initial
@@ -846,7 +849,7 @@ function AdminDashboard() {
         loadNewsletterStats();
         loadContent("home");
         loadDoctorsForSelect();
-        loadPaiementsManuels(); // ✅ Charge les paiements manuels au démarrage
+        loadPaiementsManuels();
     }, []);
     
     // Rechargement lors du changement d'onglet
@@ -868,7 +871,7 @@ function AdminDashboard() {
         if (activeTab === "applications") loadApplications();
         if (activeTab === "stats") loadStats();
         if (activeTab === "calendar") loadAvailabilities();
-        if (activeTab === "paiements-manuels") loadPaiementsManuels(); // ✅ Recharge quand on clique
+        if (activeTab === "paiements-manuels") loadPaiementsManuels();
     }, [activeTab]);
     
     // ========== RENDU JSX (React.createElement) ==========
@@ -1072,7 +1075,7 @@ function AdminDashboard() {
             )
         ),
         
-        // Médecins
+        // ========== MÉDECINS (avec amélioration des logs d'erreur) ==========
         activeTab === "doctors" && React.createElement("div", null,
             React.createElement("h3", null, "➕ Ajouter un médecin"),
             React.createElement("form", { onSubmit: async (e) => {
@@ -1085,32 +1088,61 @@ function AdminDashboard() {
                 const password = formData.get("password");
                 const telegram_chat_id = formData.get("telegram_chat_id") || null;
                 const profession = "Médecin";
-                const active = formData.get("active") === "on" ? 1 : 0;   // ✅ CORRECTION : active
+                const active = formData.get("active") === "on" ? 1 : 0;
                 const photoFile = formData.get("photo");
                 let photo_url = null;
+                
+                // Upload de la photo si présente
                 if (photoFile && photoFile.size) {
                     const fd = new FormData();
                     fd.append("image", photoFile);
                     const uploadRes = await fetch(API_BASE + "/upload", { method: "POST", body: fd });
                     const uploadData = await uploadRes.json();
-                    if (uploadData.imageUrl) photo_url = uploadData.imageUrl;
-                    else { alert("Erreur upload photo"); return; }
+                    if (uploadData.imageUrl) {
+                        photo_url = uploadData.imageUrl;
+                    } else {
+                        alert("Erreur upload photo : " + (uploadData.error || ""));
+                        return;
+                    }
                 }
-                const payload = { 
-                    full_name, 
-                    profession, 
-                    specialty, 
-                    department, 
-                    email, 
-                    phone: "", 
-                    photo_url, 
-                    password, 
+                
+                const payload = {
+                    full_name,
+                    profession,
+                    specialty,
+                    department,
+                    email,
+                    phone: "",
+                    photo_url,
+                    password,
                     telegram_chat_id,
-                    active          // ✅ CORRECTION : active au lieu de is_active
+                    active
                 };
-                const res = await fetch(API_BASE + "/staff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-                if (res.ok) { showSuccess("Médecin ajouté"); loadDoctors(); e.target.reset(); }
-                else alert("Erreur");
+                
+                // Log du payload pour déboguer
+                console.log("📦 Payload envoyé :", payload);
+                
+                try {
+                    const res = await fetch(API_BASE + "/staff", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (res.ok) {
+                        showSuccess("Médecin ajouté");
+                        loadDoctors();
+                        e.target.reset();
+                    } else {
+                        // Récupération du message d'erreur
+                        const errData = await res.json();
+                        console.error("❌ Erreur serveur :", errData);
+                        alert("❌ Erreur : " + (errData.error || errData.message || res.statusText));
+                    }
+                } catch (err) {
+                    console.error("❌ Erreur réseau :", err);
+                    alert("❌ Erreur réseau : " + err.message);
+                }
             }, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "full_name", placeholder: "Nom complet", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "text", name: "specialty", placeholder: "Spécialité", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1119,7 +1151,7 @@ function AdminDashboard() {
                 React.createElement("input", { type: "password", name: "password", placeholder: "Mot de passe", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "text", name: "telegram_chat_id", placeholder: "Telegram Chat ID", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "file", name: "photo", accept: "image/*", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("input", { type: "checkbox", name: "active", defaultChecked: true, style: { marginRight: "5px" } }), // ✅ name="active"
+                React.createElement("input", { type: "checkbox", name: "active", defaultChecked: true, style: { marginRight: "5px" } }),
                 React.createElement("label", null, " Actif"),
                 React.createElement("br", null),
                 React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Ajouter")
@@ -1140,7 +1172,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.specialty || d.profession)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.photo_url ? React.createElement("img", { src: d.photo_url, style: { width: "40px", height: "40px", borderRadius: "50%" } }) : "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.telegram_chat_id || "-")),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.active ? "✅" : "❌"), // affichage
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.active ? "✅" : "❌"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
                                 React.createElement("button", { onClick: () => setEditingDoctor(d), style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
                                 React.createElement("button", { onClick: () => deleteDoctor(d.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"),
@@ -1188,7 +1220,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ========== CONTENU DU SITE (avec option topbar) ==========
+        // ========== CONTENU DU SITE ==========
         activeTab === "content" && React.createElement("div", null,
             React.createElement("h2", null, "✏️ Contenu du site"),
             React.createElement("select", { value: selectedPage, onChange: e => { setSelectedPage(e.target.value); loadContent(e.target.value); }, style: { padding: "8px", marginBottom: "20px", borderRadius: "8px" } },
