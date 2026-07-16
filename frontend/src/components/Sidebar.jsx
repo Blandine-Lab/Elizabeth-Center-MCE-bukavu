@@ -2,13 +2,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 // 🔑 Mot de passe pour accéder à l'administration
-const ADMIN_PASSWORD = '@@Mpombo21262578@@@@19'; // Changez-le selon vos besoins
+const ADMIN_PASSWORD = '@@Mpombo21262578@@@@19';
 
 function Sidebar({ isOpen, toggleSidebar, isMobile }) {
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(0);
 
-  // Menu visible (sans le lien Administration)
   const menuItems = [
     { path: '/', label: '🏠 Accueil', icon: 'fas fa-home' },
     { path: '/nos-specialites', label: '📋 Spécialités', icon: 'fas fa-stethoscope' },
@@ -22,7 +21,6 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
     { path: '/espace-patient', label: '👤 Espace Patient', icon: 'fas fa-user-circle' },
     { path: '/espace-medecin', label: '⚕️ Espace Médecin', icon: 'fas fa-user-md' },
     { path: '/messages-patient', label: '💬 Messagerie', icon: 'fas fa-comments' },
-    // Le lien /admin a été retiré volontairement
   ];
 
   const sidebarStyle = {
@@ -41,27 +39,34 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
     boxShadow: '2px 0 12px rgba(0,0,0,0.08)'
   };
 
-  // Gestion du clic sur "Accueil"
   const handleHomeClick = (e) => {
-    if (isMobile && toggleSidebar) toggleSidebar(); // fermer la sidebar sur mobile si besoin
+    // Empêcher la navigation par défaut du Link vers '/'
+    e.preventDefault();
+
+    if (isMobile && toggleSidebar) toggleSidebar();
 
     const newCount = clickCount + 1;
     setClickCount(newCount);
 
     if (newCount === 6) {
-      // Demander le mot de passe
       const password = window.prompt('🔐 Entrez le mot de passe administrateur :');
       if (password === ADMIN_PASSWORD) {
-        navigate('/admin');
+        console.log('✅ Mot de passe correct, redirection vers /admin');
+        // Redirection forcée via window.location (plus fiable)
+        window.location.href = '/admin';
         setClickCount(0);
       } else {
         if (password !== null) alert('❌ Mot de passe incorrect');
         setClickCount(0);
+        // Retourner à l'accueil si le mot de passe est faux
+        window.location.href = '/';
       }
+    } else {
+      // Si le compteur n'est pas à 6, on navigue normalement vers l'accueil
+      window.location.href = '/';
     }
   };
 
-  // Réinitialiser le compteur si on clique sur un autre lien
   const handleOtherLinkClick = () => {
     setClickCount(0);
     if (isMobile && toggleSidebar) toggleSidebar();
@@ -89,7 +94,6 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
         </div>
         <nav style={{ padding: '5px 0', flex: 1 }}>
           {menuItems.map((item) => {
-            // Lien spécial pour Accueil
             const isHome = item.path === '/';
             return (
               <Link
