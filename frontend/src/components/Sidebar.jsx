@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
-// ⚠️ Plus de mot de passe stocké ici !
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 function Sidebar({ isOpen, toggleSidebar, isMobile }) {
@@ -24,6 +23,59 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
     { path: '/messages-patient', label: '💬 Messagerie', icon: 'fas fa-comments' },
   ];
 
+  const handleHomeClick = async (e) => {
+    e.preventDefault();
+
+    if (isMobile && toggleSidebar) toggleSidebar();
+
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    if (newCount === 6) {
+      const password = window.prompt('🔐 Entrez le mot de passe administrateur :');
+      if (password === null) {
+        setClickCount(0);
+        navigate('/');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        console.log('📡 Envoi de la requête à :', `${API_BASE}/verify-admin`);
+        const response = await fetch(`${API_BASE}/verify-admin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+        console.log('📨 Réponse du serveur :', data);
+
+        if (response.ok && data.valid) {
+          console.log('✅ Mot de passe correct, redirection vers /admin');
+          window.location.href = '/admin';
+        } else {
+          alert('❌ Mot de passe incorrect');
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('💥 Erreur réseau :', error);
+        alert('❌ Erreur réseau, veuillez réessayer');
+        navigate('/');
+      } finally {
+        setIsLoading(false);
+        setClickCount(0);
+      }
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleOtherLinkClick = () => {
+    setClickCount(0);
+    if (isMobile && toggleSidebar) toggleSidebar();
+  };
+
   const sidebarStyle = {
     width: '150px',
     height: '100vh',
@@ -38,57 +90,6 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
     justifyContent: 'space-between',
     transition: 'left 0.3s ease',
     boxShadow: '2px 0 12px rgba(0,0,0,0.08)'
-  };
-
-  const handleHomeClick = async (e) => {
-    e.preventDefault();
-
-    if (isMobile && toggleSidebar) toggleSidebar();
-
-    const newCount = clickCount + 1;
-    setClickCount(newCount);
-
-    if (newCount === 6) {
-      const password = window.prompt('🔐 Entrez le mot de passe administrateur :');
-      if (password === null) {
-        setClickCount(0);
-        window.location.href = '/';
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const response = await fetch(`${API_BASE}/verify-admin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.valid) {
-          console.log('✅ Mot de passe correct, redirection vers /admin');
-          window.location.href = '/admin';
-        } else {
-          alert('❌ Mot de passe incorrect');
-          window.location.href = '/';
-        }
-      } catch (error) {
-        console.error('Erreur lors de la vérification :', error);
-        alert('❌ Erreur réseau, veuillez réessayer');
-        window.location.href = '/';
-      } finally {
-        setIsLoading(false);
-        setClickCount(0);
-      }
-    } else {
-      window.location.href = '/';
-    }
-  };
-
-  const handleOtherLinkClick = () => {
-    setClickCount(0);
-    if (isMobile && toggleSidebar) toggleSidebar();
   };
 
   return (
