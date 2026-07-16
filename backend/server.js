@@ -8,10 +8,13 @@ const pool = require('./config/db');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middlewares
+// ========== MIDDLEWARES ==========
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+
+// Servir les fichiers uploadés avec un chemin absolu
+const uploadsPath = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
 // Routes de test
 app.get('/api/health', (req, res) => {
