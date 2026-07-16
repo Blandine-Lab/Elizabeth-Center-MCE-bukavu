@@ -31,6 +31,15 @@ function EspaceMedecin() {
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [attachmentPreview, setAttachmentPreview] = useState(null);
 
+  // États pour "Disponibilités"
+  const [availabilities, setAvailabilities] = useState([]);
+  const [newDate, setNewDate] = useState('');
+  const [newStartTime, setNewStartTime] = useState('09:00');
+  const [newEndTime, setNewEndTime] = useState('10:00');
+  const [availabilityFeedback, setAvailabilityFeedback] = useState('');
+  const [loadingAvail, setLoadingAvail] = useState(false);
+
+  // Fonction d'échappement HTML
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, (m) =>
@@ -48,6 +57,7 @@ function EspaceMedecin() {
     }
   };
 
+  // -------------------- Connexion --------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -97,9 +107,10 @@ function EspaceMedecin() {
     setPatients([]);
     setDoctors([]);
     setAppointments([]);
+    setAvailabilities([]);
   };
 
-  // ---- Messages ----
+  // -------------------- Messages --------------------
   const fetchMessages = async () => {
     if (!medecin || !token) return;
     try {
@@ -118,7 +129,7 @@ function EspaceMedecin() {
     }
   };
 
-  // ---- Médecins et patients ----
+  // -------------------- Médecins et patients --------------------
   const fetchDoctors = async () => {
     try {
       const res = await fetch(`${API_BASE}/staff`);
@@ -160,7 +171,7 @@ function EspaceMedecin() {
     }
   };
 
-  // ---- Rendez-vous ----
+  // -------------------- Rendez-vous --------------------
   const fetchAppointments = async () => {
     if (!medecin || !token) return;
     try {
@@ -179,7 +190,99 @@ function EspaceMedecin() {
     }
   };
 
-  // ---- Répondre à un message ----
+  // -------------------- Disponibilités --------------------
+  const fetchAvailabilities = async () => {
+    if (!medecin || !token) return;
+    setLoadingAvail(true);
+    try {
+      // Utilisation de la route /api/availability/doctor/:id
+      const res = await fetch(`${API_BASE}/availability/doctor/${medecin.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setAvailabilities(data);
+      setAvailabilityFeedback('');
+    } catch (err) {
+      console.error('❌ fetchAvailabilities:', err);
+      setAvailabilityFeedback('❌ Erreur chargement des disponibilités');
+    } finally {
+      setLoadingAvail(false);
+    }
+  };
+
+  const addAvailability = async (e) => {
+    e.preventDefault();
+    if (!newDate || !newStartTime || !newEndTime) {
+      setAvailabilityFeedback('❌ Veuillez remplir tous les champs');
+      return;
+    }
+    if (newStartTime >= newEndTime) {
+      setAvailabilityFeedback('❌ L\'heure de début doit être avant l\'heure de fin');
+      return;
+    }
+    const time_slot = `${newStartTime}-${newEndTime}`;
+    setLoadingAvail(true);
+    try {
+      const res = await fetch(`${API_BASE}/availabilities`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          doctor_id: medecin.id,
+          date: newDate,
+          time_slot: time_slot,
+        }),
+      });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erreur HTTP ${res.status}`);
+      }
+      setAvailabilityFeedback('✅ Créneau ajouté avec succès');
+      setNewDate('');
+      setNewStartTime('09:00');
+      setNewEndTime('10:00');
+      fetchAvailabilities(); // rafraîchir la liste
+    } catch (err) {
+      setAvailabilityFeedback(`❌ ${err.message}`);
+    } finally {
+      setLoadingAvail(false);
+    }
+  };
+
+  const deleteAvailability = async (id) => {
+    if (!window.confirm('Supprimer ce créneau ?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/availabilities/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erreur HTTP ${res.status}`);
+      }
+      setAvailabilityFeedback('✅ Créneau supprimé');
+      fetchAvailabilities();
+    } catch (err) {
+      setAvailabilityFeedback(`❌ ${err.message}`);
+    }
+  };
+
+  // -------------------- Répondre à un message --------------------
   const sendReply = async (messageId) => {
     if (!replyText.trim()) {
       setFeedback({ ...feedback, reply: 'Message vide' });
@@ -215,7 +318,7 @@ function EspaceMedecin() {
     }
   };
 
-  // ---- Nouveau message ----
+  // -------------------- Nouveau message --------------------
   const sendNewMessage = async (e) => {
     e.preventDefault();
 
@@ -323,11 +426,12 @@ function EspaceMedecin() {
     }
   };
 
-  // ---- Auto-refresh messages ----
+  // -------------------- Effets --------------------
   useEffect(() => {
     if (medecin && token) {
       fetchMessages();
       fetchAppointments();
+      fetchAvailabilities();
       const interval = setInterval(() => {
         fetchMessages();
         fetchAppointments();
@@ -624,6 +728,21 @@ function EspaceMedecin() {
               }}
             >
               ✉️ Nouveau message
+            </button>
+            {/* 👇 NOUVEL ONGLET */}
+            <button
+              onClick={() => setActiveTab('disponibilites')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'disponibilites' ? 'bold' : 'normal',
+                color: activeTab === 'disponibilites' ? '#0b6e8f' : '#4a5568',
+                borderBottom: activeTab === 'disponibilites' ? '2px solid #0b6e8f' : 'none',
+              }}
+            >
+              📋 Disponibilités
             </button>
           </div>
 
@@ -1186,6 +1305,123 @@ function EspaceMedecin() {
                   </div>
                 )}
               </form>
+            </div>
+          )}
+
+          {/* ============== TAB : Disponibilités ============== */}
+          {activeTab === 'disponibilites' && (
+            <div>
+              <h3 style={{ color: '#0b6e8f' }}>📋 Gérer mes disponibilités</h3>
+
+              {/* Formulaire d'ajout */}
+              <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
+                <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>➕ Ajouter un créneau</h4>
+                <form onSubmit={addAvailability} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+                  <div style={{ flex: '1 1 150px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>Date</label>
+                    <input
+                      type="date"
+                      value={newDate}
+                      onChange={(e) => setNewDate(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 120px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>Début</label>
+                    <input
+                      type="time"
+                      value={newStartTime}
+                      onChange={(e) => setNewStartTime(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 120px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>Fin</label>
+                    <input
+                      type="time"
+                      value={newEndTime}
+                      onChange={(e) => setNewEndTime(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loadingAvail}
+                    style={{
+                      background: '#0b6e8f',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '2rem',
+                      cursor: 'pointer',
+                      height: 'fit-content',
+                    }}
+                  >
+                    {loadingAvail ? 'Ajout...' : 'Ajouter'}
+                  </button>
+                </form>
+                {availabilityFeedback && (
+                  <div style={{ marginTop: '0.5rem', color: availabilityFeedback.includes('✅') ? 'green' : 'red' }}>
+                    {availabilityFeedback}
+                  </div>
+                )}
+              </div>
+
+              {/* Liste des créneaux */}
+              <h4 style={{ color: '#0b6e8f' }}>📅 Mes créneaux actifs</h4>
+              {loadingAvail && <p>Chargement...</p>}
+              {!loadingAvail && availabilities.length === 0 && (
+                <p style={{ color: '#4a6b80' }}>Aucun créneau enregistré.</p>
+              )}
+              {!loadingAvail && availabilities.length > 0 && (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: '#0b6e8f', color: 'white' }}>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>Date</th>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>Créneau</th>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>Réservé ?</th>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {availabilities.map((av) => (
+                        <tr key={av.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '8px' }}>{av.date}</td>
+                          <td style={{ padding: '8px' }}>{av.time_slot}</td>
+                          <td style={{ padding: '8px' }}>
+                            {av.is_booked ? (
+                              <span style={{ color: 'red' }}>✅ Réservé</span>
+                            ) : (
+                              <span style={{ color: 'green' }}>Libre</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '8px' }}>
+                            {!av.is_booked && (
+                              <button
+                                onClick={() => deleteAvailability(av.id)}
+                                style={{
+                                  background: '#dc3545',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '0.2rem 0.8rem',
+                                  borderRadius: '1rem',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Supprimer
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>
