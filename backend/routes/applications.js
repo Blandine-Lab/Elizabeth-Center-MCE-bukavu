@@ -4,7 +4,7 @@ const pool = require('../config/db');
 const SibApiV3Sdk = require('@sendinblue/client');
 
 // ============================================================
-// 1. CONFIGURATION BREVO (AUTHENTIFICATION OFFICIELLE)
+// 1. CONFIGURATION BREVO (VERSION CORRIGÉE)
 // ============================================================
 const apiKey = process.env.BREVO_API_KEY;
 const emailFrom = process.env.EMAIL_FROM || 'contact@medicalcenterelizabeth.org';
@@ -14,12 +14,12 @@ if (!apiKey) {
   console.warn('⚠️  BREVO_API_KEY non définie – les emails ne seront pas envoyés.');
 }
 
-// Méthode recommandée par la documentation Brevo v3
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-const apiKeyAuth = defaultClient.authentications['api-key'];
-apiKeyAuth.apiKey = apiKey;
-
+// ✅ NOUVELLE MÉTHODE D'AUTHENTIFICATION (fonctionne avec la version récente)
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+apiInstance.setApiKey(
+  SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
+  apiKey
+);
 
 // ============================================================
 // 2. FONCTION D'ENVOI AVEC TIMEOUT (15 secondes max)
@@ -30,17 +30,19 @@ async function sendEmailBrevo({ to, subject, html, text }) {
     return { success: false, error: 'API key missing' };
   }
 
-  const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-  sendSmtpEmail.sender = { email: emailFrom, name: 'Medical Center Elizabeth' };
-  sendSmtpEmail.to = [{ email: to }];
-  sendSmtpEmail.subject = subject;
-  sendSmtpEmail.htmlContent = html;
-  sendSmtpEmail.textContent = text || html.replace(/<[^>]*>?/gm, '');
+  // ✅ On utilise l'objet directement, plus besoin de SendSmtpEmail
+  const emailData = {
+    sender: { email: emailFrom, name: 'Medical Center Elizabeth' },
+    to: [{ email: to }],
+    subject: subject,
+    htmlContent: html,
+    textContent: text || html.replace(/<[^>]*>?/gm, '')
+  };
 
   try {
     // 🔥 COURSE CONTRE LA MONTRE : on force l'échec au bout de 15s
     const data = await Promise.race([
-      apiInstance.sendTransacEmail(sendSmtpEmail),
+      apiInstance.sendTransacEmail(emailData),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`⏰ Timeout de 15s pour l'envoi à ${to}`)), 15000)
       )
@@ -49,7 +51,6 @@ async function sendEmailBrevo({ to, subject, html, text }) {
     console.log(`✅ Email envoyé à ${to} – ID: ${data?.messageId || 'OK'}`);
     return { success: true, messageId: data?.messageId };
   } catch (error) {
-    // 🚨 On affiche la VRAIE raison (corps de la réponse Brevo)
     const errorDetails = error.response?.body || error.message || error;
     console.error(`❌ ÉCHEC envoi à ${to}:`, JSON.stringify(errorDetails, null, 2));
     return { success: false, error: error.message };
@@ -57,10 +58,8 @@ async function sendEmailBrevo({ to, subject, html, text }) {
 }
 
 // ============================================================
-// 3. TEMPLATES D'EMAILS (personnalisez le HTML ici)
+// 3. TEMPLATES D'EMAILS (inchangés)
 // ============================================================
-
-// --- Email de confirmation au CANDIDAT ---
 async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
   console.log(`📧 Envoi confirmation à ${candidateEmail}...`);
 
@@ -91,7 +90,6 @@ async function sendCandidateConfirmation(candidateEmail, fullName, jobTitle) {
   return sendEmailBrevo({ to: candidateEmail, subject, html });
 }
 
-// --- Email de notification à l'ADMIN ---
 async function sendAdminAlert(fullName, email, phone, jobTitle, message, cvUrl) {
   console.log(`📧 Envoi notification admin...`);
 
@@ -118,13 +116,12 @@ async function sendAdminAlert(fullName, email, phone, jobTitle, message, cvUrl) 
 }
 
 // ============================================================
-// 4. ROUTE PRINCIPALE : DÉPÔT DE CANDIDATURE
+// 4. ROUTE PRINCIPALE : DÉPÔT DE CANDIDATURE (inchangée)
 // ============================================================
 router.post('/', async (req, res) => {
   try {
     const { jobId, jobTitle, fullName, email, phone, message, cvUrl } = req.body;
 
-    // Vérification des champs obligatoires
     if (!jobId || !fullName || !email || !cvUrl) {
       return res.status(400).json({
         success: false,
@@ -132,7 +129,6 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // 1. Sauvegarde en base de données
     const result = await pool.query(
       `INSERT INTO applications 
        (job_id, job_title, full_name, email, phone, message, cv_url, applied_date, status)
@@ -144,13 +140,11 @@ router.post('/', async (req, res) => {
     const applicationId = result.rows[0].id;
     console.log(`✅ Candidature enregistrée, ID: ${applicationId}`);
 
-    // 2. Envoi des emails en PARALLÈLE (avec Promise.allSettled)
     const emailResults = await Promise.allSettled([
       sendCandidateConfirmation(email, fullName, jobTitle),
       sendAdminAlert(fullName, email, phone, jobTitle, message, cvUrl)
     ]);
 
-    // 3. Logs détaillés du résultat des emails
     emailResults.forEach((r, index) => {
       const label = index === 0 ? 'CANDIDAT' : 'ADMIN';
       if (r.status === 'fulfilled') {
@@ -165,7 +159,6 @@ router.post('/', async (req, res) => {
       }
     });
 
-    // 4. Réponse au frontend (toujours 201, même si un email échoue, car la candidature est en DB)
     res.status(201).json({
       success: true,
       application: result.rows[0],
