@@ -5,11 +5,11 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 function CheckupCenter() {
   const [formData, setFormData] = useState({
-    fullname: '',
+    full_name: '',
     email: '',
     phone: '',
-    checkupType: 'Bilan essentiel',
-    date: '',
+    checkup_type: 'Bilan essentiel',
+    preferred_date: '',
     timeSlot: 'Matin (9h-12h)',
     message: ''
   });
@@ -24,10 +24,20 @@ function CheckupCenter() {
     e.preventDefault();
     setFormStatus('Envoi en cours...');
     try {
+      // On construit le payload avec les champs attendus par le backend
+      const payload = {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        checkup_type: formData.checkup_type,
+        preferred_date: formData.preferred_date || null,
+        message: formData.message + (formData.timeSlot ? ` (Créneau souhaité : ${formData.timeSlot})` : '')
+      };
+
       const res = await fetch(`${API_BASE}/checkup-requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -36,11 +46,11 @@ function CheckupCenter() {
       await res.json();
       setFormStatus('✅ Votre demande a été envoyée. Un conseiller vous recontactera sous 24h.');
       setFormData({
-        fullname: '',
+        full_name: '',
         email: '',
         phone: '',
-        checkupType: 'Bilan essentiel',
-        date: '',
+        checkup_type: 'Bilan essentiel',
+        preferred_date: '',
         timeSlot: 'Matin (9h-12h)',
         message: ''
       });
@@ -52,7 +62,7 @@ function CheckupCenter() {
   };
 
   const selectCheckup = (type) => {
-    setFormData(prev => ({ ...prev, checkupType: type }));
+    setFormData(prev => ({ ...prev, checkup_type: type }));
     document.getElementById('reservationForm')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -200,7 +210,7 @@ function CheckupCenter() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem', color: '#0f3a4b' }}>Nom complet</label>
-                  <input type="text" name="fullname" value={formData.fullname} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }} />
+                  <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }} />
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem', color: '#0f3a4b' }}>Email</label>
@@ -212,21 +222,21 @@ function CheckupCenter() {
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem', color: '#0f3a4b' }}>Bilan choisi</label>
-                  <select name="checkupType" value={formData.checkupType} onChange={handleChange} style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }}>
-                    <option>Bilan essentiel</option>
-                    <option>Bilan confort +</option>
-                    <option>Bilan premium</option>
+                  <select name="checkup_type" value={formData.checkup_type} onChange={handleChange} style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }}>
+                    <option value="Bilan essentiel">Bilan essentiel</option>
+                    <option value="Bilan confort +">Bilan confort +</option>
+                    <option value="Bilan premium">Bilan premium</option>
                   </select>
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem', color: '#0f3a4b' }}>Date souhaitée</label>
-                  <input type="date" name="date" value={formData.date} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }} />
+                  <input type="date" name="preferred_date" value={formData.preferred_date} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }} />
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem', color: '#0f3a4b' }}>Créneau</label>
                   <select name="timeSlot" value={formData.timeSlot} onChange={handleChange} style={{ width: '100%', padding: '0.8rem', borderRadius: '1rem', border: '1px solid #dce5ec' }}>
-                    <option>Matin (9h-12h)</option>
-                    <option>Après-midi (14h-17h)</option>
+                    <option value="Matin (9h-12h)">Matin (9h-12h)</option>
+                    <option value="Après-midi (14h-17h)">Après-midi (14h-17h)</option>
                   </select>
                 </div>
               </div>
