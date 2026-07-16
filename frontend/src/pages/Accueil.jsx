@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import { Link } from 'react-router-dom';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const MEDIA_BASE = process.env.REACT_APP_MEDIA_URL || '';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -450,7 +451,7 @@ function Accueil() {
             ) : (
               doctors.filter(d => d.profession === 'Médecin').map(m => (
                 <div key={m.id} className="doctor-card" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)' }}>
-                  <div className="doc-img">{m.photo_url ? <img src={`${API_BASE.replace('/api', '')}${m.photo_url}`} alt={m.full_name} /> : <i className="fas fa-user-md"></i>}</div>
+                  <div className="doc-img">{m.photo_url ? <img src={`${MEDIA_BASE}${m.photo_url}`} alt={m.full_name} /> : <i className="fas fa-user-md"></i>}</div>
                   <h4>{escapeHtml(m.full_name)}</h4>
                   <p className="specialty">{escapeHtml(m.profession)}{m.specialty ? ' - ' + escapeHtml(m.specialty) : ''}</p>
                   <p>{escapeHtml(m.department || '')}</p>
@@ -499,7 +500,7 @@ function Accueil() {
                 {actualites.length === 0 ? <p>Chargement des actualités...</p> : actualites.map(a => (
                   <div key={a.id} className="news-item">
                     {a.image_url ? (
-                      <img src={`${API_BASE.replace('/api', '')}${a.image_url}`} className="news-img" alt={a.titre} onError={(e) => { e.target.style.display = 'none'; }} />
+                      <img src={`${MEDIA_BASE}${a.image_url}`} className="news-img" alt={a.titre} onError={(e) => { e.target.style.display = 'none'; }} />
                     ) : (
                       <div className="news-img"><i className="fas fa-newspaper"></i></div>
                     )}
@@ -531,7 +532,7 @@ function Accueil() {
           <div className="etablissement-grid">
             {etablissement.length === 0 ? <p>Chargement des photos...</p> : etablissement.map(p => (
               <div key={p.id} className="etablissement-card">
-                <img src={`${API_BASE.replace('/api', '')}${p.image_url}`} alt={escapeHtml(p.titre)} />
+                <img src={`${MEDIA_BASE}${p.image_url}`} alt={escapeHtml(p.titre)} />
                 <div className="content">
                   <h3>{escapeHtml(p.titre)}</h3>
                   <p>{escapeHtml(p.description || '')}</p>
@@ -551,7 +552,7 @@ function Accueil() {
             {partenaires.length === 0 ? <p>Chargement des partenaires...</p> : partenaires.map(p => (
               <div key={p.id} className="partenaire-card">
                 {p.image_url ? (
-                  <img src={`${API_BASE.replace('/api', '')}${p.image_url}`} alt={escapeHtml(p.nom)} onError={(e) => { e.target.style.display = 'none'; }} />
+                  <img src={`${MEDIA_BASE}${p.image_url}`} alt={escapeHtml(p.nom)} onError={(e) => { e.target.style.display = 'none'; }} />
                 ) : (
                   <div style={{ width: '100%', height: '100px', background: '#e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>
                     <i className="fas fa-building" style={{ fontSize: '2rem', color: '#adb5bd' }}></i>
