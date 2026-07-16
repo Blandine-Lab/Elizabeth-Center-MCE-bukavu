@@ -88,8 +88,8 @@ if (process.env.NODE_ENV === 'production') {
   const frontendBuildPath = path.join(__dirname, '../frontend/build');
   app.use(express.static(frontendBuildPath));
 
-  // ✅ Wildcard pour toutes les routes non-API (compatible Express 4/5)
-  app.get('*', (req, res) => {
+  // ✅ Correction : utiliser app.use au lieu de app.get pour éviter l'erreur path-to-regexp
+  app.use('*', (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
 }
