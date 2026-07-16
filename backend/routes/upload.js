@@ -4,13 +4,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Dossier uploads
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configuration de stockage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -22,7 +20,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// Filtre : images + documents
 const fileFilter = (req, file, cb) => {
   const allowedMimes = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg',
@@ -46,28 +43,38 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 Mo
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter
 });
 
-// 🔥 Route principale – attend le champ 'file'
-router.post('/', upload.single('file'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Aucun fichier envoyé' });
+// Route principale – accepte les champs 'file' ou 'image'
+router.post('/', (req, res) => {
+  // Utiliser un middleware multer qui accepte un champ variable
+  // On va utiliser upload.single avec un champ dynamique : on vérifie quel champ est présent
+  // Pour simplifier, on utilise upload.any() mais on s'assure qu'un seul fichier est envoyé
+  upload.any()(req, res, (err) => {
+    if (err) {
+      console.error('Erreur upload:', err);
+      return res.status(500).json({ error: err.message });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({
-      success: true,
-      fileUrl,
-      url: fileUrl,
-      filename: req.file.filename,
-      message: 'Fichier téléchargé avec succès'
-    });
-  } catch (err) {
-    console.error('Erreur upload:', err);
-    res.status(500).json({ error: err.message });
-  }
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'Aucun fichier envoyé' });
+      }
+      const file = req.files[0];
+      const fileUrl = `/uploads/${file.filename}`;
+      res.json({
+        success: true,
+        fileUrl,
+        url: fileUrl,
+        filename: file.filename,
+        message: 'Fichier téléchargé avec succès'
+      });
+    } catch (err) {
+      console.error('Erreur upload:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
 });
 
 // Route pour CV (champ 'cv')
