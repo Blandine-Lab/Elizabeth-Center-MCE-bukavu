@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
-const bcrypt = require('bcrypt'); // ⚠️ N'oubliez pas d'installer bcrypt si ce n'est pas déjà fait
+const bcrypt = require('bcrypt');
 
 // Helper : convertir la valeur en booléen PostgreSQL
 const toBoolean = (value) => {
@@ -167,23 +167,45 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/staff/:id – Supprimer un médecin
+// ===== DELETE /api/staff/:id – Supprimer un médecin (avec nettoyage des dépendances) =====
 router.delete('/:id', async (req, res) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM staff WHERE id = $1 RETURNING *', [id]);
+
+    // Démarrer une transaction
+    await client.query('BEGIN');
+
+    // 1. Supprimer les disponibilités liées
+    await client.query('DELETE FROM availabilities WHERE doctor_id = $1', [id]);
+
+    // 2. Supprimer les rendez-vous liés
+    await client.query('DELETE FROM appointments WHERE doctor_id = $1', [id]);
+
+    // 3. Supprimer le médecin lui-même
+    const result = await client.query(
+      'DELETE FROM staff WHERE id = $1 RETURNING *',
+      [id]
+    );
+
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Médecin non trouvé' });
     }
-    res.json({ message: 'Médecin supprimé', deleted: result.rows[0] });
+
+    // Valider la transaction
+    await client.query('COMMIT');
+    res.json({ message: 'Médecin et dépendances supprimés', deleted: result.rows[0] });
   } catch (err) {
-    console.error('Erreur DELETE /staff/:id :', err.message);
+    await client.query('ROLLBACK');
+    console.error('❌ Erreur DELETE /staff/:id :', err.message);
     res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 });
 
-// ========== NOUVELLE ROUTE : RÉINITIALISATION DU MOT DE PASSE ==========
-// PUT /api/staff/:id/password
+// PUT /api/staff/:id/password – Réinitialiser le mot de passe
 router.put('/:id/password', async (req, res) => {
   try {
     const { id } = req.params;
