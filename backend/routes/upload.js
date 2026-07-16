@@ -4,10 +4,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Dossier uploads (chemin absolu)
-const uploadDir = path.join(__dirname, '../uploads');
+// ===== Configuration du dossier d'upload =====
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
 
-// Création du dossier avec permissions explicites
+// Création du dossier avec permissions
 try {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
@@ -19,7 +19,7 @@ try {
   console.error('❌ Erreur création dossier uploads:', err);
 }
 
-// Configuration de stockage
+// ===== Stockage =====
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// Filtre : images + documents
+// ===== Filtre : images + documents =====
 const fileFilter = (req, file, cb) => {
   const allowedMimes = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg',
@@ -55,22 +55,22 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 Mo
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter
 });
 
-// ========== ROUTE PRINCIPALE ==========
+// ===== ROUTE PRINCIPALE =====
 router.post('/', (req, res) => {
-  // Utiliser upload.any() pour accepter 'file' ou 'image'
   upload.any()(req, res, (err) => {
-    // Gestion des erreurs multer
     if (err) {
       console.error('❌ Erreur Multer:', err);
-      return res.status(500).json({ error: err.message, stack: err.stack });
+      const errorMsg = process.env.NODE_ENV === 'production' 
+        ? 'Erreur lors du téléchargement du fichier' 
+        : err.message;
+      return res.status(500).json({ error: errorMsg });
     }
 
     try {
-      // Vérifier qu'un fichier a été reçu
       if (!req.files || req.files.length === 0) {
         console.warn('⚠️ Aucun fichier reçu');
         return res.status(400).json({ error: 'Aucun fichier envoyé' });
@@ -82,21 +82,26 @@ router.post('/', (req, res) => {
       console.log(`✅ Fichier reçu : ${file.originalname} → ${file.filename}`);
       console.log(`📂 Chemin complet : ${path.join(uploadDir, file.filename)}`);
 
+      // ✅ AJOUT DE imageUrl POUR LE FRONTEND
       res.json({
         success: true,
         fileUrl,
         url: fileUrl,
+        imageUrl: fileUrl,          // <-- Clé attendue par le frontend
         filename: file.filename,
         message: 'Fichier téléchargé avec succès'
       });
     } catch (err) {
       console.error('💥 Erreur lors du traitement du fichier :', err);
-      res.status(500).json({ error: err.message, stack: err.stack });
+      const errorMsg = process.env.NODE_ENV === 'production'
+        ? 'Erreur interne du serveur'
+        : err.message;
+      res.status(500).json({ error: errorMsg });
     }
   });
 });
 
-// ========== ROUTE POUR CV (champ 'cv') ==========
+// ===== ROUTE POUR CV =====
 const cvStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -127,15 +132,21 @@ router.post('/cv', cvUpload.single('cv'), (req, res) => {
       return res.status(400).json({ error: 'Aucun CV envoyé' });
     }
     console.log(`✅ CV reçu : ${req.file.originalname} → ${req.file.filename}`);
+    const cvUrl = `/uploads/${req.file.filename}`;
     res.json({
       success: true,
-      cvUrl: `/uploads/${req.file.filename}`,
+      cvUrl,
+      url: cvUrl,
+      imageUrl: cvUrl,    // <-- Ajout pour cohérence
       filename: req.file.filename,
       message: 'CV téléchargé avec succès'
     });
   } catch (err) {
     console.error('❌ Erreur upload CV :', err);
-    res.status(500).json({ error: err.message });
+    const errorMsg = process.env.NODE_ENV === 'production'
+      ? 'Erreur lors du téléchargement du CV'
+      : err.message;
+    res.status(500).json({ error: errorMsg });
   }
 });
 
