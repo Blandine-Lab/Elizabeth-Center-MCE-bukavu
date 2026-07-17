@@ -39,7 +39,7 @@ function EspaceMedecin() {
   const [availabilityFeedback, setAvailabilityFeedback] = useState('');
   const [loadingAvail, setLoadingAvail] = useState(false);
 
-  // États "Salles de réunion"
+  // États "Salles de réunion" avec invitations
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [roomBookings, setRoomBookings] = useState([]);
@@ -52,6 +52,7 @@ function EspaceMedecin() {
     end_time: '10:00',
     is_remote: false,
     room_id: '',
+    invited_emails: '',
   });
   const [bookingFeedback, setBookingFeedback] = useState('');
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -349,6 +350,7 @@ function EspaceMedecin() {
         booked_by: medecin.id,
         booked_by_name: medecin.name,
         room_id: bookingForm.is_remote ? null : bookingForm.room_id,
+        invited_emails: bookingForm.invited_emails || null,
       };
       if (!payload.room_id && !payload.is_remote) {
         setBookingFeedback('❌ Choisissez une salle ou activez "réunion à distance"');
@@ -375,6 +377,7 @@ function EspaceMedecin() {
         end_time: '10:00',
         is_remote: false,
         room_id: '',
+        invited_emails: '',
       });
     } catch (err) {
       setBookingFeedback(`❌ ${err.message}`);
@@ -776,7 +779,7 @@ function EspaceMedecin() {
             </button>
           </div>
 
-          {/* Barre d'onglets */}
+          {/* Barre d'onglets avec "📅 Mes réunions" */}
           <div
             style={{
               display: 'flex',
@@ -792,12 +795,14 @@ function EspaceMedecin() {
               { id: 'newmessage', label: '✉️ Nouveau message' },
               { id: 'disponibilites', label: '📋 Disponibilités' },
               { id: 'meetings', label: '🏢 Salles de réunion' },
+              // 👇 NOUVEL ONGLET
+              { id: 'my-meetings', label: '📅 Mes réunions' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
                   setActiveTab(tab.id);
-                  if (tab.id === 'meetings') {
+                  if (tab.id === 'meetings' || tab.id === 'my-meetings') {
                     fetchRooms();
                     fetchMyBookings();
                   }
@@ -1310,7 +1315,7 @@ function EspaceMedecin() {
             </div>
           )}
 
-          {/* ===== TAB : Salles de réunion ===== */}
+          {/* ===== TAB : Salles de réunion (réservation + liste) ===== */}
           {activeTab === 'meetings' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>🏢 Salles de réunion</h3>
@@ -1441,6 +1446,18 @@ function EspaceMedecin() {
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
                       />
                     </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Inviter des participants (emails séparés par des virgules)
+                      </label>
+                      <textarea
+                        value={bookingForm.invited_emails}
+                        onChange={(e) => setBookingForm({ ...bookingForm, invited_emails: e.target.value })}
+                        rows="2"
+                        placeholder="exemple@email.com, autre@email.com"
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
                   </div>
                   <button
                     type="submit"
@@ -1512,7 +1529,7 @@ function EspaceMedecin() {
                 </div>
               )}
 
-              {/* Mes réservations */}
+              {/* Mes réservations (affichage rapide dans l'onglet Salles) */}
               <div style={{ marginTop: '2rem' }}>
                 <h4>📅 Mes réservations</h4>
                 {myBookings.length === 0 ? (
@@ -1563,6 +1580,90 @@ function EspaceMedecin() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ===== NOUVEL ONGLET : Mes réunions (vue simplifiée avec lien direct) ===== */}
+          {activeTab === 'my-meetings' && (
+            <div>
+              <h3 style={{ color: '#0b6e8f' }}>📅 Mes réunions</h3>
+              {myBookings.length === 0 ? (
+                <p style={{ color: '#4a6b80' }}>Vous n'avez pas encore de réunions planifiées.</p>
+              ) : (
+                <div>
+                  {myBookings.map((b) => (
+                    <div
+                      key={b.id}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '1.2rem',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        backgroundColor: '#ffffff',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '1.05rem', color: '#0b6e8f' }}>
+                          {escapeHtml(b.title)}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: '#4a6b80', marginTop: '0.2rem' }}>
+                          📅 {b.date} &nbsp;—&nbsp; ⏰ {b.start_time} - {b.end_time}
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.1rem' }}>
+                          {b.is_remote ? '📹 Visioconférence' : `🏢 Salle : ${b.room_name || b.room_id}`}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {b.meeting_link ? (
+                          <a
+                            href={b.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: '#2ec4b6',
+                              color: 'white',
+                              border: 'none',
+                              padding: '0.4rem 1.2rem',
+                              borderRadius: '2rem',
+                              textDecoration: 'none',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                            }}
+                          >
+                            🔗 Rejoindre
+                          </a>
+                        ) : (
+                          <span style={{ color: '#6c757d', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                            (réunion physique)
+                          </span>
+                        )}
+                        <button
+                          onClick={() => cancelBooking(b.id)}
+                          style={{
+                            background: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.3rem 0.8rem',
+                            borderRadius: '1rem',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
