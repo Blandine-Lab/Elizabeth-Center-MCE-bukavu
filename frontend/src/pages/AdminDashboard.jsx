@@ -45,6 +45,16 @@ function AdminDashboard() {
     const [editingStaff, setEditingStaff] = useState(null);
     const [staffFeedback, setStaffFeedback] = useState('');
 
+    // 👇 État pour les informations patients
+    const [infoPatientsContent, setInfoPatientsContent] = useState({
+        horaires: '',
+        repas: '',
+        parking: '',
+        regles: '',
+        contact: ''
+    });
+    const [infoPatientsLoading, setInfoPatientsLoading] = useState(false);
+
     // États pour les formulaires et modales (existants)
     const [showJobForm, setShowJobForm] = useState(false);
     const [showEventForm, setShowEventForm] = useState(false);
@@ -337,7 +347,7 @@ function AdminDashboard() {
         }
     };
     
-    // ========== CHARGEMENT DES NOUVELLES DONNÉES (salles et personnel) ==========
+    // ========== CHARGEMENT DES NOUVELLES DONNÉES ==========
     const loadRooms = async () => {
         try {
             const res = await fetch(`${API_BASE}/meeting-rooms`);
@@ -368,6 +378,50 @@ function AdminDashboard() {
             setStaffList(data);
         } catch (err) {
             console.error('loadStaffList:', err);
+        }
+    };
+
+    // ========== INFOS PATIENTS ==========
+    const loadInfoPatients = async () => {
+        setInfoPatientsLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/site-content/info`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.contenu) {
+                    try {
+                        const parsed = JSON.parse(data.contenu);
+                        setInfoPatientsContent(parsed);
+                    } catch {
+                        setInfoPatientsContent(data);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('loadInfoPatients error:', err);
+        } finally {
+            setInfoPatientsLoading(false);
+        }
+    };
+
+    const saveInfoPatients = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/site-content`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    key: 'info',
+                    contenu: JSON.stringify(infoPatientsContent)
+                })
+            });
+            if (res.ok) {
+                showSuccess('✅ Informations patients mises à jour');
+                loadInfoPatients();
+            } else {
+                alert('❌ Erreur');
+            }
+        } catch (err) {
+            console.error('saveInfoPatients error:', err);
         }
     };
 
@@ -1183,9 +1237,10 @@ function AdminDashboard() {
         { id: "patients", label: "Patients" },
         { id: "paiements-manuels", label: "Paiements manuels" },
         { id: "messages", label: "📩 Messages" },
-        // Nouveaux onglets
         { id: "rooms", label: "🏢 Salles de réunion" },
-        { id: "staff", label: "👥 Personnel hospitalier" }
+        { id: "staff", label: "👥 Personnel hospitalier" },
+        // 👇 Nouvel onglet
+        { id: "infos-patients", label: "📋 Infos patients" }
     ];
     
     // ========== CHARGEMENT INITIAL ==========
@@ -1211,10 +1266,10 @@ function AdminDashboard() {
         loadDoctorsForSelect();
         loadPaiementsManuels();
         loadMessages();
-        // Nouveaux chargements
         loadRooms();
         loadAllBookings();
         loadStaffList();
+        loadInfoPatients(); // 👈 Chargement initial
     }, []);
     
     // ========== RECHARGEMENT AU CHANGEMENT D'ONGLET ==========
@@ -1240,6 +1295,7 @@ function AdminDashboard() {
         if (activeTab === "messages") loadMessages();
         if (activeTab === "rooms") { loadRooms(); loadAllBookings(); }
         if (activeTab === "staff") loadStaffList();
+        if (activeTab === "infos-patients") loadInfoPatients(); // 👈 Rechargement au changement d'onglet
     }, [activeTab]);
     
     // ========== RENDU JSX ==========
@@ -2354,6 +2410,61 @@ function AdminDashboard() {
                     ))
                 )
             )
+        ),
+
+        // ===== NOUVEL ONGLET : INFOS PATIENTS =====
+        activeTab === "infos-patients" && React.createElement("div", null,
+            React.createElement("h2", null, "📋 Informations patients & visiteurs"),
+            React.createElement("p", { style: { color: "#6c757d" } }, "Modifiez les informations affichées sur la page 'Infos patients'."),
+            React.createElement("form", { onSubmit: (e) => { e.preventDefault(); saveInfoPatients(); }, style: { display: "flex", flexDirection: "column", gap: "1rem" } },
+                React.createElement("div", null,
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "🕒 Horaires de visite"),
+                    React.createElement("textarea", {
+                        value: infoPatientsContent.horaires || '',
+                        onChange: e => setInfoPatientsContent({...infoPatientsContent, horaires: e.target.value}),
+                        rows: "3",
+                        style: { width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }
+                    })
+                ),
+                React.createElement("div", null,
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "🍽️ Suggestions de repas"),
+                    React.createElement("textarea", {
+                        value: infoPatientsContent.repas || '',
+                        onChange: e => setInfoPatientsContent({...infoPatientsContent, repas: e.target.value}),
+                        rows: "8",
+                        style: { width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }
+                    })
+                ),
+                React.createElement("div", null,
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "🚗 Accès et parking"),
+                    React.createElement("textarea", {
+                        value: infoPatientsContent.parking || '',
+                        onChange: e => setInfoPatientsContent({...infoPatientsContent, parking: e.target.value}),
+                        rows: "4",
+                        style: { width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }
+                    })
+                ),
+                React.createElement("div", null,
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "🛡️ Règles et recommandations"),
+                    React.createElement("textarea", {
+                        value: infoPatientsContent.regles || '',
+                        onChange: e => setInfoPatientsContent({...infoPatientsContent, regles: e.target.value}),
+                        rows: "6",
+                        style: { width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }
+                    })
+                ),
+                React.createElement("div", null,
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "📞 Contacts utiles"),
+                    React.createElement("textarea", {
+                        value: infoPatientsContent.contact || '',
+                        onChange: e => setInfoPatientsContent({...infoPatientsContent, contact: e.target.value}),
+                        rows: "4",
+                        style: { width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }
+                    })
+                ),
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "10px 20px", borderRadius: "25px", cursor: "pointer", alignSelf: "flex-start" } }, "💾 Enregistrer")
+            ),
+            infoPatientsLoading && React.createElement("p", null, "Chargement...")
         ),
         
         React.createElement("div", { className: "footer", style: { marginTop: "20px", textAlign: "center", color: "#6c757d" } }, React.createElement("p", null, "🔒 Accès sécurisé réservé au personnel autorisé"))
