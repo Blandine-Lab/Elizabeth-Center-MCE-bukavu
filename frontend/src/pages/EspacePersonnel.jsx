@@ -28,6 +28,7 @@ function EspacePersonnel() {
     end_time: '10:00',
     is_remote: false,
     room_id: '',
+    invited_emails: '', // 👈 Ajouté pour les invitations
   });
   const [bookingFeedback, setBookingFeedback] = useState('');
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -182,6 +183,7 @@ function EspacePersonnel() {
         booked_by: staff.id,
         booked_by_name: staff.name,
         room_id: bookingForm.is_remote ? null : bookingForm.room_id,
+        invited_emails: bookingForm.invited_emails || null,
       };
       if (!payload.room_id && !payload.is_remote) {
         setBookingFeedback('❌ Choisissez une salle ou activez "réunion à distance"');
@@ -208,6 +210,7 @@ function EspacePersonnel() {
         end_time: '10:00',
         is_remote: false,
         room_id: '',
+        invited_emails: '',
       });
     } catch (err) {
       setBookingFeedback(`❌ ${err.message}`);
@@ -529,7 +532,7 @@ function EspacePersonnel() {
             </button>
           </div>
 
-          {/* Barre d'onglets */}
+          {/* Barre d'onglets avec "📅 Mes réunions" */}
           <div
             style={{
               display: 'flex',
@@ -543,10 +546,18 @@ function EspacePersonnel() {
               { id: 'rooms', label: '🏢 Salles' },
               { id: 'messages', label: '📬 Messagerie' },
               { id: 'mybookings', label: '📅 Mes réservations' },
+              // 👇 Nouvel onglet
+              { id: 'my-meetings', label: '📅 Mes réunions' },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'rooms' || tab.id === 'mybookings' || tab.id === 'my-meetings') {
+                    fetchRooms();
+                    fetchMyBookings();
+                  }
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -562,10 +573,12 @@ function EspacePersonnel() {
             ))}
           </div>
 
-          {/* TAB : Salles de réunion */}
+          {/* ===== TAB : Salles de réunion (réservation + invitations) ===== */}
           {activeTab === 'rooms' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>🏢 Salles de réunion</h3>
+
+              {/* Liste des salles */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
                 {loadingRooms ? (
                   <p>Chargement...</p>
@@ -595,7 +608,7 @@ function EspacePersonnel() {
                 )}
               </div>
 
-              {/* Formulaire réservation (identique) */}
+              {/* Formulaire réservation avec invitations */}
               <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
                 <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>
                   {bookingForm.is_remote ? 'Réunion à distance' : 'Réserver une salle'}
@@ -691,6 +704,19 @@ function EspacePersonnel() {
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
                       />
                     </div>
+                    {/* 👇 Champ pour les invitations */}
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Inviter des participants (emails séparés par des virgules)
+                      </label>
+                      <textarea
+                        value={bookingForm.invited_emails}
+                        onChange={(e) => setBookingForm({ ...bookingForm, invited_emails: e.target.value })}
+                        rows="2"
+                        placeholder="exemple@email.com, autre@email.com"
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
                   </div>
                   <button
                     type="submit"
@@ -714,7 +740,7 @@ function EspacePersonnel() {
                 </form>
               </div>
 
-              {/* Réservations de la salle */}
+              {/* Réservations de la salle sélectionnée */}
               {selectedRoom && (
                 <div>
                   <h4>Réservations pour cette salle</h4>
@@ -764,7 +790,7 @@ function EspacePersonnel() {
             </div>
           )}
 
-          {/* TAB : Messagerie (avec envoi de nouveau message) */}
+          {/* ===== TAB : Messagerie (avec envoi de nouveau message) ===== */}
           {activeTab === 'messages' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📬 Messagerie</h3>
@@ -968,7 +994,7 @@ function EspacePersonnel() {
             </div>
           )}
 
-          {/* TAB : Mes réservations */}
+          {/* ===== TAB : Mes réservations (liste avec lien direct) ===== */}
           {activeTab === 'mybookings' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📅 Mes réservations</h3>
@@ -1018,6 +1044,90 @@ function EspacePersonnel() {
                     </button>
                   </div>
                 ))
+              )}
+            </div>
+          )}
+
+          {/* ===== NOUVEL ONGLET : Mes réunions (vue simplifiée avec lien direct) ===== */}
+          {activeTab === 'my-meetings' && (
+            <div>
+              <h3 style={{ color: '#0b6e8f' }}>📅 Mes réunions</h3>
+              {myBookings.length === 0 ? (
+                <p style={{ color: '#4a6b80' }}>Vous n'avez pas encore de réunions planifiées.</p>
+              ) : (
+                <div>
+                  {myBookings.map((b) => (
+                    <div
+                      key={b.id}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '1.2rem',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        backgroundColor: '#ffffff',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '1.05rem', color: '#0b6e8f' }}>
+                          {escapeHtml(b.title)}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: '#4a6b80', marginTop: '0.2rem' }}>
+                          📅 {b.date} &nbsp;—&nbsp; ⏰ {b.start_time} - {b.end_time}
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.1rem' }}>
+                          {b.is_remote ? '📹 Visioconférence' : `🏢 Salle : ${b.room_name || b.room_id}`}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {b.meeting_link ? (
+                          <a
+                            href={b.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: '#2ec4b6',
+                              color: 'white',
+                              border: 'none',
+                              padding: '0.4rem 1.2rem',
+                              borderRadius: '2rem',
+                              textDecoration: 'none',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                            }}
+                          >
+                            🔗 Rejoindre
+                          </a>
+                        ) : (
+                          <span style={{ color: '#6c757d', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                            (réunion physique)
+                          </span>
+                        )}
+                        <button
+                          onClick={() => cancelBooking(b.id)}
+                          style={{
+                            background: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.3rem 0.8rem',
+                            borderRadius: '1rem',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
