@@ -52,10 +52,21 @@ app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/paiement', require('./routes/paiement'));
 app.use('/api/paiements', require('./routes/paiement'));
 app.use('/api/newsletter', require('./routes/newsletter'));
+
 // ========== ROUTES CHECKUP ==========
 app.use('/api/checkup-requests', require('./routes/checkup'));
+
+// ========== ROUTES AVAILABILITY ==========
 app.use('/api/availability', require('./routes/availability'));
+
+// ========== ROUTES SALLES DE RÉUNION ==========
 app.use('/api/meeting-rooms', require('./routes/meeting-rooms'));
+
+// ========== ROUTES ADMIN : PERSONNEL ==========
+app.use('/api/admin/staff', require('./routes/admin/staff'));
+
+// ========== ROUTES STAFF LOGIN ==========
+app.use('/api/staff', require('./routes/staff-login'));
 
 // ========== ROUTE UPLOAD ==========
 app.use('/api/upload', require('./routes/upload'));
