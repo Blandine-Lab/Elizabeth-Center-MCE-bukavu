@@ -2,6 +2,26 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 
+// ========== GET /doctor/:doctorId – Récupérer les disponibilités d’un médecin ==========
+router.get('/doctor/:doctorId', async (req, res) => {
+  try {
+    const doctorId = parseInt(req.params.doctorId);
+    if (isNaN(doctorId)) {
+      return res.status(400).json({ error: 'ID médecin invalide' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM availabilities WHERE doctor_id = $1 ORDER BY date ASC, time_slot ASC',
+      [doctorId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ GET /availability/doctor/:id', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ========== GET /:doctorId/:date – Créneaux disponibles pour un médecin et une date ==========
 router.get('/:doctorId/:date', async (req, res) => {
   try {
     const { doctorId, date } = req.params;
@@ -25,6 +45,7 @@ router.get('/:doctorId/:date', async (req, res) => {
   }
 });
 
+// ========== GET /calendar – Calendrier global avec noms des médecins ==========
 router.get('/calendar', async (req, res) => {
   try {
     const result = await pool.query(
@@ -40,6 +61,7 @@ router.get('/calendar', async (req, res) => {
   }
 });
 
+// ========== POST / – Ajouter un créneau ==========
 router.post('/', async (req, res) => {
   try {
     const { doctor_id, date, time_slot } = req.body;
@@ -99,6 +121,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ========== DELETE /:id – Supprimer un créneau ==========
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

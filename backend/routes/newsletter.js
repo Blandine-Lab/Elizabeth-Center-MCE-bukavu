@@ -12,13 +12,24 @@ if (!apiKey) {
   console.warn('⚠️ BREVO_API_KEY non définie – les emails ne seront pas envoyés.');
 }
 
-// Initialisation du client Brevo
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
 
 /**
+ * Vérifie si la colonne 'active' existe dans la table newsletter_subscribers
+ */
+async function hasActiveColumn() {
+  const result = await pool.query(`
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'newsletter_subscribers' AND column_name = 'active'
+    );
+  `);
+  return result.rows[0].exists;
+}
+
+/**
  * Envoi d’un email via l’API Brevo
- * Supporte le BCC pour les newsletters
  */
 async function sendEmailBrevo({ to, subject, html, text, bcc }) {
   if (!apiKey) {
@@ -34,7 +45,6 @@ async function sendEmailBrevo({ to, subject, html, text, bcc }) {
   sendSmtpEmail.textContent = text || html.replace(/<[^>]*>?/gm, '');
 
   if (bcc && bcc.length > 0) {
-    // Brevo accepte jusqu’à 50 destinataires en BCC par requête
     sendSmtpEmail.bcc = bcc.map(email => ({ email }));
   }
 
@@ -48,14 +58,17 @@ async function sendEmailBrevo({ to, subject, html, text, bcc }) {
   }
 }
 
-// ===== ROUTES =====
+// ============ ROUTES ============
 
 /**
- * GET /api/newsletter/count – Nombre d’abonnés
+ * GET /api/newsletter/count
  */
 router.get('/count', async (req, res) => {
   try {
-    const result = await pool.query('SELECT COUNT(*) FROM newsletter_subscribers WHERE active = true');
+    const activeExists = await hasActiveColumn();
+    let query = 'SELECT COUNT(*) FROM newsletter_subscribers';
+    if (activeExists) query += ' WHERE active = true';
+    const result = await pool.query(query);
     res.json({ count: parseInt(result.rows[0].count, 10) });
   } catch (err) {
     console.error('❌ Erreur /count:', err);
@@ -64,25 +77,32 @@ router.get('/count', async (req, res) => {
 });
 
 /**
- * POST /api/newsletter/subscribe – Inscription à la newsletter
+ * POST /api/newsletter/subscribe
  */
 router.post('/subscribe', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email requis' });
 
-    // Vérifier si l'email existe déjà
     const exist = await pool.query('SELECT id FROM newsletter_subscribers WHERE email = $1', [email]);
     if (exist.rows.length > 0) {
-      // Réactiver si désactivé
-      await pool.query('UPDATE newsletter_subscribers SET active = true WHERE email = $1', [email]);
+      const activeExists = await hasActiveColumn();
+      if (activeExists) {
+        await pool.query('UPDATE newsletter_subscribers SET active = true WHERE email = $1', [email]);
+      }
       return res.json({ message: '✅ Vous êtes déjà inscrit(e) !' });
     }
 
-    await pool.query(
-      'INSERT INTO newsletter_subscribers (email, subscribed_at, active) VALUES ($1, NOW(), true)',
-      [email]
-    );
+    const activeExists = await hasActiveColumn();
+    let query, params;
+    if (activeExists) {
+      query = 'INSERT INTO newsletter_subscribers (email, subscribed_at, active) VALUES ($1, NOW(), true)';
+      params = [email];
+    } else {
+      query = 'INSERT INTO newsletter_subscribers (email, subscribed_at) VALUES ($1, NOW())';
+      params = [email];
+    }
+    await pool.query(query, params);
     res.json({ message: '✅ Inscription réussie !' });
   } catch (err) {
     console.error('❌ Erreur /subscribe:', err);
@@ -91,8 +111,7 @@ router.post('/subscribe', async (req, res) => {
 });
 
 /**
- * POST /api/newsletter/send – Envoyer une newsletter (admin)
- * Utilise l’API Brevo avec BCC (50 destinataires max par requête)
+ * POST /api/newsletter/send
  */
 router.post('/send', async (req, res) => {
   try {
@@ -101,17 +120,18 @@ router.post('/send', async (req, res) => {
       return res.status(400).json({ error: 'Sujet et contenu requis' });
     }
 
-    // Récupérer tous les emails actifs
-    const result = await pool.query('SELECT email FROM newsletter_subscribers WHERE active = true');
+    const activeExists = await hasActiveColumn();
+    let query = 'SELECT email FROM newsletter_subscribers';
+    if (activeExists) query += ' WHERE active = true';
+    const result = await pool.query(query);
     const emails = result.rows.map(row => row.email);
 
     if (emails.length === 0) {
-      return res.status(400).json({ error: 'Aucun abonné actif' });
+      return res.status(400).json({ error: 'Aucun abonné trouvé' });
     }
 
     console.log(`📧 Envoi newsletter à ${emails.length} abonnés...`);
 
-    // Découpage en lots de 50 (limite Brevo)
     const chunkSize = 50;
     const chunks = [];
     for (let i = 0; i < emails.length; i += chunkSize) {
@@ -121,13 +141,12 @@ router.post('/send', async (req, res) => {
     let successCount = 0;
     for (const chunk of chunks) {
       const result = await sendEmailBrevo({
-        to: adminEmail, // destinaire principal (admin)
+        to: adminEmail,
         bcc: chunk,
         subject,
         html: content,
       });
       if (result.success) successCount += chunk.length;
-      // Petite pause pour éviter le rate limiting
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
@@ -142,13 +161,16 @@ router.post('/send', async (req, res) => {
 });
 
 /**
- * GET /api/newsletter/export – Exporter les emails en CSV
+ * GET /api/newsletter/export
  */
 router.get('/export', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT email FROM newsletter_subscribers WHERE active = true ORDER BY subscribed_at DESC'
-    );
+    const activeExists = await hasActiveColumn();
+    let query = 'SELECT email FROM newsletter_subscribers ORDER BY subscribed_at DESC';
+    if (activeExists) {
+      query = 'SELECT email FROM newsletter_subscribers WHERE active = true ORDER BY subscribed_at DESC';
+    }
+    const result = await pool.query(query);
     const emails = result.rows.map(row => row.email);
     res.json({ emails });
   } catch (err) {
