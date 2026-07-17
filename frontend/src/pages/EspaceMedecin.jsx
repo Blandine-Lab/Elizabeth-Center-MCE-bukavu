@@ -57,6 +57,10 @@ function EspaceMedecin() {
   const [bookingFeedback, setBookingFeedback] = useState('');
   const [loadingRooms, setLoadingRooms] = useState(false);
 
+  // Nouveaux états pour les invités (multi-select)
+  const [staffList, setStaffList] = useState([]);
+  const [selectedInvitees, setSelectedInvitees] = useState([]); // ids
+
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, (m) =>
@@ -128,6 +132,8 @@ function EspaceMedecin() {
     setRooms([]);
     setMyBookings([]);
     setRoomBookings([]);
+    setStaffList([]);
+    setSelectedInvitees([]);
   };
 
   // ===== Messages =====
@@ -149,7 +155,7 @@ function EspaceMedecin() {
     }
   };
 
-  // ===== Médecins et patients =====
+  // ===== Médecins, patients, staff =====
   const fetchDoctors = async () => {
     try {
       const res = await fetch(`${API_BASE}/staff`);
@@ -188,6 +194,19 @@ function EspaceMedecin() {
       console.error('Erreur chargement patients:', err);
       setPatientsError('Impossible de charger la liste des patients.');
       setPatients([]);
+    }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/staff`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setStaffList(data);
+    } catch (err) {
+      console.error('❌ fetchStaff:', err);
     }
   };
 
@@ -351,6 +370,7 @@ function EspaceMedecin() {
         booked_by_name: medecin.name,
         room_id: bookingForm.is_remote ? null : bookingForm.room_id,
         invited_emails: bookingForm.invited_emails || null,
+        invited_ids: selectedInvitees, // 👈 nouveau
       };
       if (!payload.room_id && !payload.is_remote) {
         setBookingFeedback('❌ Choisissez une salle ou activez "réunion à distance"');
@@ -379,6 +399,7 @@ function EspaceMedecin() {
         room_id: '',
         invited_emails: '',
       });
+      setSelectedInvitees([]); // réinitialiser
     } catch (err) {
       setBookingFeedback(`❌ ${err.message}`);
     }
@@ -552,6 +573,9 @@ function EspaceMedecin() {
       fetchAvailabilities();
       fetchRooms();
       fetchMyBookings();
+      fetchDoctors();
+      fetchPatients();
+      fetchStaff(); // 👈 charger le personnel
       const interval = setInterval(() => {
         fetchMessages();
         fetchAppointments();
@@ -779,7 +803,7 @@ function EspaceMedecin() {
             </button>
           </div>
 
-          {/* Barre d'onglets avec "📅 Mes réunions" */}
+          {/* Barre d'onglets */}
           <div
             style={{
               display: 'flex',
@@ -795,7 +819,6 @@ function EspaceMedecin() {
               { id: 'newmessage', label: '✉️ Nouveau message' },
               { id: 'disponibilites', label: '📋 Disponibilités' },
               { id: 'meetings', label: '🏢 Salles de réunion' },
-              // 👇 NOUVEL ONGLET
               { id: 'my-meetings', label: '📅 Mes réunions' },
             ].map((tab) => (
               <button
@@ -1350,7 +1373,7 @@ function EspaceMedecin() {
                 )}
               </div>
 
-              {/* Formulaire de réservation */}
+              {/* Formulaire de réservation avec sélection des invités */}
               <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
                 <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>
                   {bookingForm.is_remote ? 'Réunion à distance' : 'Réserver une salle'}
@@ -1446,6 +1469,7 @@ function EspaceMedecin() {
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
                       />
                     </div>
+                    {/* INVITATIONS : emails + multi-select */}
                     <div style={{ gridColumn: 'span 2' }}>
                       <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                         Inviter des participants (emails séparés par des virgules)
@@ -1457,6 +1481,44 @@ function EspaceMedecin() {
                         placeholder="exemple@email.com, autre@email.com"
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
                       />
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Inviter des participants (médecins / personnel)
+                      </label>
+                      <select
+                        multiple
+                        value={selectedInvitees}
+                        onChange={(e) => {
+                          const options = e.target.options;
+                          const values = [];
+                          for (let i = 0; i < options.length; i++) {
+                            if (options[i].selected) {
+                              values.push(parseInt(options[i].value));
+                            }
+                          }
+                          setSelectedInvitees(values);
+                        }}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', minHeight: '80px' }}
+                      >
+                        <optgroup label="Médecins">
+                          {doctors.map((doc) => (
+                            <option key={doc.id} value={doc.id}>
+                              Dr {doc.full_name} ({doc.specialty || 'Généraliste'})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Personnel">
+                          {staffList.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.role || 'staff'})
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                      <div style={{ fontSize: '0.8rem', color: '#6c757d', marginTop: '0.2rem' }}>
+                        Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs participants.
+                      </div>
                     </div>
                   </div>
                   <button
@@ -1562,6 +1624,15 @@ function EspaceMedecin() {
                             🔗 Démarrer la visio
                           </a>
                         )}
+                        {b.invited_ids && b.invited_ids.length > 0 && (
+                          <div style={{ fontSize: '0.8rem', color: '#6c757d', marginTop: '0.2rem' }}>
+                            Invités : {b.invited_ids.map(id => {
+                              const doc = doctors.find(d => d.id === id);
+                              const staff = staffList.find(s => s.id === id);
+                              return doc ? `Dr ${doc.full_name}` : staff ? staff.name : id;
+                            }).join(', ')}
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={() => cancelBooking(b.id)}
@@ -1588,7 +1659,7 @@ function EspaceMedecin() {
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📅 Mes réunions</h3>
               {myBookings.length === 0 ? (
-                <p style={{ color: '#4a6b80' }}>Vous n'avez pas encore de réunions planifiées.</p>
+                <p style={{ color: '#4a6b80' }}>Vous n'avez pas encore de réunions planifiées ou invitées.</p>
               ) : (
                 <div>
                   {myBookings.map((b) => (
@@ -1617,6 +1688,15 @@ function EspaceMedecin() {
                         <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.1rem' }}>
                           {b.is_remote ? '📹 Visioconférence' : `🏢 Salle : ${b.room_name || b.room_id}`}
                         </div>
+                        {b.invited_ids && b.invited_ids.length > 0 && (
+                          <div style={{ fontSize: '0.8rem', color: '#6c757d', marginTop: '0.2rem' }}>
+                            Invités : {b.invited_ids.map(id => {
+                              const doc = doctors.find(d => d.id === id);
+                              const staff = staffList.find(s => s.id === id);
+                              return doc ? `Dr ${doc.full_name}` : staff ? staff.name : id;
+                            }).join(', ')}
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         {b.meeting_link ? (
