@@ -40,7 +40,7 @@ function EspacePersonnel() {
   const [newMessage, setNewMessage] = useState({ doctor_id: '', subject: '', content: '' });
   const [newMessageFeedback, setNewMessageFeedback] = useState('');
 
-  // États pour les invités (nouveau)
+  // États pour les invités (multi-select)
   const [staffList, setStaffList] = useState([]);
   const [selectedInvitees, setSelectedInvitees] = useState([]);
 
@@ -214,7 +214,7 @@ function EspacePersonnel() {
         booked_by_name: staff.name,
         room_id: bookingForm.is_remote ? null : bookingForm.room_id,
         invited_emails: bookingForm.invited_emails || null,
-        invited_ids: selectedInvitees, // 👈 nouveau
+        invited_ids: selectedInvitees,
       };
       if (!payload.room_id && !payload.is_remote) {
         setBookingFeedback('❌ Choisissez une salle ou activez "réunion à distance"');
@@ -348,7 +348,7 @@ function EspacePersonnel() {
       fetchRooms();
       fetchMyBookings();
       fetchDoctors();
-      fetchStaffList(); // 👈 nouveau
+      fetchStaffList();
       const interval = setInterval(() => {
         fetchMessages();
         fetchMyBookings();

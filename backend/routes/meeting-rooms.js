@@ -1,6 +1,49 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
+const SibApiV3Sdk = require('@sendinblue/client');
+
+// Configuration Brevo
+const apiKey = process.env.BREVO_API_KEY;
+const emailFrom = process.env.EMAIL_FROM || 'contact@medicalcenterelizabeth.org';
+
+if (!apiKey) {
+  console.warn('⚠️ BREVO_API_KEY non définie – les invitations ne seront pas envoyées.');
+}
+
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+
+// Fonction d'envoi d'email d'invitation
+async function sendInvitationEmails(emails, title, date, start_time, end_time, link) {
+  if (!apiKey) {
+    console.warn('❌ Clé API Brevo manquante, invitation non envoyée');
+    return;
+  }
+  const subject = `Invitation à la réunion : ${title}`;
+  const html = `
+    <h2>Invitation à une réunion</h2>
+    <p><strong>${title}</strong></p>
+    <p>Date : ${date}</p>
+    <p>Heure : ${start_time} - ${end_time}</p>
+    <p>Lien de visioconférence : <a href="${link}">${link}</a></p>
+    <p>Cliquez sur le lien pour rejoindre la réunion.</p>
+    <p>Medical Center Elizabeth</p>
+  `;
+  for (const email of emails) {
+    try {
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      sendSmtpEmail.sender = { email: emailFrom, name: 'Medical Center Elizabeth' };
+      sendSmtpEmail.to = [{ email }];
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      await apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log(`✅ Invitation envoyée à ${email}`);
+    } catch (err) {
+      console.error(`❌ Échec envoi à ${email}:`, err.message);
+    }
+  }
+}
 
 // ===== SALLES =====
 
@@ -123,16 +166,20 @@ router.get('/bookings/all', async (req, res) => {
   }
 });
 
-// GET /api/meeting-rooms/bookings/user/:userId – Réservations d'un utilisateur
+// GET /api/meeting-rooms/bookings/user/:userId – Réservations d'un utilisateur (créateur ou invité)
 router.get('/bookings/user/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
+
+    // On récupère les réservations où l'utilisateur est soit le créateur (booked_by),
+    // soit présent dans le tableau invited_ids (JSONB)
     const result = await pool.query(
       `SELECT b.*, r.name as room_name 
        FROM room_bookings b
        LEFT JOIN meeting_rooms r ON b.room_id = r.id
-       WHERE b.booked_by = $1 AND b.status = 'confirmed'
+       WHERE (b.booked_by = $1 OR b.invited_ids ? $1) 
+         AND b.status = 'confirmed'
        ORDER BY b.date ASC, b.start_time ASC`,
       [userId]
     );
@@ -143,11 +190,25 @@ router.get('/bookings/user/:userId', async (req, res) => {
   }
 });
 
-// POST /api/meeting-rooms/book – Créer une réservation
+// POST /api/meeting-rooms/book – Créer une réservation (avec invited_ids)
 router.post('/book', async (req, res) => {
   console.log('📥 POST /meeting-rooms/book reçu :', req.body);
   try {
-    const { room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote } = req.body;
+    const {
+      room_id,
+      booked_by,
+      booked_by_name,
+      title,
+      description,
+      date,
+      start_time,
+      end_time,
+      is_remote,
+      invited_emails,
+      invited_ids      // nouveau champ : tableau d'IDs (JSONB)
+    } = req.body;
+
+    // Validation
     if (!booked_by || !title || !date || !start_time || !end_time) {
       return res.status(400).json({ error: 'Champs obligatoires manquants' });
     }
@@ -155,7 +216,7 @@ router.post('/book', async (req, res) => {
       return res.status(400).json({ error: 'Choisissez une salle ou activez "réunion à distance"' });
     }
 
-    // Vérification des conflits pour les réunions physiques
+    // Vérification des conflits (uniquement si salle physique)
     if (!is_remote && room_id) {
       const conflict = await pool.query(
         `SELECT * FROM room_bookings 
@@ -170,35 +231,50 @@ router.post('/book', async (req, res) => {
       }
     }
 
+    // Génération du lien Jitsi (pour réunion à distance)
     let meeting_link = null;
     if (is_remote) {
       const roomName = `mce-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       meeting_link = `https://meet.jit.si/${roomName}`;
     }
 
-    // On retire 'description' de l'INSERT car elle n'existe pas dans la table
-    // On l'ajoute si la colonne a été ajoutée, sinon on laisse vide.
-    // Pour être sûr, on utilise description seulement si présent.
-    const hasDescription = req.body.hasOwnProperty('description');
-    const query = `INSERT INTO room_bookings 
-       (room_id, booked_by, booked_by_name, title, ${hasDescription ? 'description,' : ''} date, start_time, end_time, is_remote, meeting_link)
-       VALUES ($1, $2, $3, $4, ${hasDescription ? '$5,' : ''} $${hasDescription ? 6 : 5}, $${hasDescription ? 7 : 6}, $${hasDescription ? 8 : 7}, $${hasDescription ? 9 : 8}, $${hasDescription ? 10 : 9})
-       RETURNING *`;
-    // mais c'est compliqué avec les paramètres variables. Mieux vaut ajouter la colonne.
-
-    // Solution simple : ajouter description à la table
-    // On va donc utiliser la colonne description, on suppose qu'elle existe.
+    // Insertion avec invited_ids (JSONB)
     const result = await pool.query(
       `INSERT INTO room_bookings 
-       (room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote, meeting_link)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote, meeting_link, invited_emails, invited_ids)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [room_id || null, booked_by, booked_by_name || null, title, description || null, date, start_time, end_time, is_remote || false, meeting_link]
+      [
+        room_id || null,
+        booked_by,
+        booked_by_name || null,
+        title,
+        description || null,
+        date,
+        start_time,
+        end_time,
+        is_remote || false,
+        meeting_link,
+        invited_emails || null,
+        invited_ids || []   // valeur par défaut : tableau vide
+      ]
     );
+
+    // Envoi des invitations par email (si des emails sont fournis)
+    if (invited_emails) {
+      const emails = invited_emails.split(',').map(e => e.trim()).filter(e => e);
+      if (emails.length > 0 && meeting_link) {
+        await sendInvitationEmails(emails, title, date, start_time, end_time, meeting_link);
+      }
+    }
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('POST /book error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('❌ POST /book error:', err);
+    console.error('  Message:', err.message);
+    console.error('  Code:', err.code);
+    console.error('  Detail:', err.detail);
+    res.status(500).json({ error: err.message, code: err.code, detail: err.detail });
   }
 });
 
