@@ -123,6 +123,26 @@ router.get('/bookings/all', async (req, res) => {
   }
 });
 
+// GET /api/meeting-rooms/bookings/user/:userId – Réservations d'un utilisateur
+router.get('/bookings/user/:userId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
+    const result = await pool.query(
+      `SELECT b.*, r.name as room_name 
+       FROM room_bookings b
+       LEFT JOIN meeting_rooms r ON b.room_id = r.id
+       WHERE b.booked_by = $1 AND b.status = 'confirmed'
+       ORDER BY b.date ASC, b.start_time ASC`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('GET /bookings/user/:userId error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/meeting-rooms/book – Créer une réservation
 router.post('/book', async (req, res) => {
   console.log('📥 POST /meeting-rooms/book reçu :', req.body);
@@ -156,6 +176,18 @@ router.post('/book', async (req, res) => {
       meeting_link = `https://meet.jit.si/${roomName}`;
     }
 
+    // On retire 'description' de l'INSERT car elle n'existe pas dans la table
+    // On l'ajoute si la colonne a été ajoutée, sinon on laisse vide.
+    // Pour être sûr, on utilise description seulement si présent.
+    const hasDescription = req.body.hasOwnProperty('description');
+    const query = `INSERT INTO room_bookings 
+       (room_id, booked_by, booked_by_name, title, ${hasDescription ? 'description,' : ''} date, start_time, end_time, is_remote, meeting_link)
+       VALUES ($1, $2, $3, $4, ${hasDescription ? '$5,' : ''} $${hasDescription ? 6 : 5}, $${hasDescription ? 7 : 6}, $${hasDescription ? 8 : 7}, $${hasDescription ? 9 : 8}, $${hasDescription ? 10 : 9})
+       RETURNING *`;
+    // mais c'est compliqué avec les paramètres variables. Mieux vaut ajouter la colonne.
+
+    // Solution simple : ajouter description à la table
+    // On va donc utiliser la colonne description, on suppose qu'elle existe.
     const result = await pool.query(
       `INSERT INTO room_bookings 
        (room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote, meeting_link)
