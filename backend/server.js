@@ -39,8 +39,13 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// ========== ROUTES PRINCIPALES ==========
+// ========== ROUTES STAFF LOGIN (PERSONNEL) ==========
+// Placé AVANT la route /api/staff des médecins pour éviter le conflit
+app.use('/api/staff', require('./routes/staff-login'));
+
+// ========== ROUTES PRINCIPALES (MÉDECINS) ==========
 app.use('/api/staff', require('./routes/staff'));
+
 app.use('/api/actualites', require('./routes/actualites'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/etablissement', require('./routes/etablissement'));
@@ -64,9 +69,6 @@ app.use('/api/meeting-rooms', require('./routes/meeting-rooms'));
 
 // ========== ROUTES ADMIN : PERSONNEL ==========
 app.use('/api/admin/staff', require('./routes/admin/staff'));
-
-// ========== ROUTES STAFF LOGIN ==========
-app.use('/api/staff', require('./routes/staff-login'));
 
 // ========== ROUTE UPLOAD ==========
 app.use('/api/upload', require('./routes/upload'));

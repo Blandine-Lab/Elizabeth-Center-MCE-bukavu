@@ -4,6 +4,7 @@ const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// POST /api/staff/login – Connexion du personnel
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
