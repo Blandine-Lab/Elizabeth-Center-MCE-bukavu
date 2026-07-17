@@ -21,6 +21,8 @@ function Sidebar({ isOpen, toggleSidebar, isMobile }) {
     { path: '/espace-patient', label: '👤 Espace Patient', icon: 'fas fa-user-circle' },
     { path: '/espace-medecin', label: '⚕️ Espace Médecin', icon: 'fas fa-user-md' },
     { path: '/messages-patient', label: '💬 Messagerie', icon: 'fas fa-comments' },
+    // 👇 Nouvel élément : Espace Personnel
+    { path: '/espace-personnel', label: '👥 Espace Personnel', icon: 'fas fa-user-tie' },
   ];
 
   const handleHomeClick = async (e) => {

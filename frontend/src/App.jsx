@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import Jobs from './pages/Jobs'
 import EspacePatient from './pages/EspacePatient'
 import EspaceMedecin from './pages/EspaceMedecin'
+import EspacePersonnel from './pages/EspacePersonnel' // 👈 Nouvel import
 import Contact from './pages/Contact'
 import TrouverProfessionnel from './pages/TrouverProfessionnel'
 import InfoPatients from './pages/InfoPatients'
@@ -21,7 +22,7 @@ import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite'
 import Connexion from './pages/Connexion'
 import Inscription from './pages/Inscription'
 import RendezVous from './pages/RendezVous'
-import Teleconsultation from './pages/Teleconsultation' // ✅ Nouvel import
+import Teleconsultation from './pages/Teleconsultation'
 
 function App() {
   return (
@@ -47,7 +48,9 @@ function App() {
           <Route path="/connexion" element={<Connexion />} />
           <Route path="/rendez-vous" element={<RendezVous />} />
           <Route path="/inscription" element={<Inscription />} />
-          <Route path="/teleconsultation/:rdvId" element={<Teleconsultation />} /> {/* ✅ Route téléconsultation */}
+          <Route path="/teleconsultation/:rdvId" element={<Teleconsultation />} />
+          {/* 👇 Nouvelle route pour Espace Personnel */}
+          <Route path="/espace-personnel" element={<EspacePersonnel />} />
         </Route>
       </Routes>
     </BrowserRouter>

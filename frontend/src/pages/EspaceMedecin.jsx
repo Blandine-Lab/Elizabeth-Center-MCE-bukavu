@@ -21,7 +21,7 @@ function EspaceMedecin() {
   const [loading, setLoading] = useState(false);
   const [patientsError, setPatientsError] = useState('');
 
-  // États pour "Nouveau message"
+  // États "Nouveau message"
   const [receiverType, setReceiverType] = useState('patient');
   const [selectedReceiverId, setSelectedReceiverId] = useState('');
   const [selectedReceiverName, setSelectedReceiverName] = useState('');
@@ -31,7 +31,7 @@ function EspaceMedecin() {
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [attachmentPreview, setAttachmentPreview] = useState(null);
 
-  // États pour "Disponibilités"
+  // États "Disponibilités"
   const [availabilities, setAvailabilities] = useState([]);
   const [newDate, setNewDate] = useState('');
   const [newStartTime, setNewStartTime] = useState('09:00');
@@ -39,7 +39,23 @@ function EspaceMedecin() {
   const [availabilityFeedback, setAvailabilityFeedback] = useState('');
   const [loadingAvail, setLoadingAvail] = useState(false);
 
-  // Fonction d'échappement HTML
+  // États "Salles de réunion"
+  const [rooms, setRooms] = useState([]);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [roomBookings, setRoomBookings] = useState([]);
+  const [myBookings, setMyBookings] = useState([]);
+  const [bookingForm, setBookingForm] = useState({
+    title: '',
+    description: '',
+    date: '',
+    start_time: '09:00',
+    end_time: '10:00',
+    is_remote: false,
+    room_id: '',
+  });
+  const [bookingFeedback, setBookingFeedback] = useState('');
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, (m) =>
@@ -47,7 +63,7 @@ function EspaceMedecin() {
     );
   }
 
-  // Décodage du token (fallback)
+  // Décodage du token
   const decodeMedecinFromToken = (token) => {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -57,7 +73,7 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Connexion --------------------
+  // ===== Connexion =====
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -108,9 +124,12 @@ function EspaceMedecin() {
     setDoctors([]);
     setAppointments([]);
     setAvailabilities([]);
+    setRooms([]);
+    setMyBookings([]);
+    setRoomBookings([]);
   };
 
-  // -------------------- Messages --------------------
+  // ===== Messages =====
   const fetchMessages = async () => {
     if (!medecin || !token) return;
     try {
@@ -129,7 +148,7 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Médecins et patients --------------------
+  // ===== Médecins et patients =====
   const fetchDoctors = async () => {
     try {
       const res = await fetch(`${API_BASE}/staff`);
@@ -171,7 +190,7 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Rendez-vous --------------------
+  // ===== Rendez-vous =====
   const fetchAppointments = async () => {
     if (!medecin || !token) return;
     try {
@@ -190,12 +209,11 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Disponibilités --------------------
+  // ===== Disponibilités =====
   const fetchAvailabilities = async () => {
     if (!medecin || !token) return;
     setLoadingAvail(true);
     try {
-      // Utilisation de la route /api/availability/doctor/:id
       const res = await fetch(`${API_BASE}/availability/doctor/${medecin.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -222,7 +240,7 @@ function EspaceMedecin() {
       return;
     }
     if (newStartTime >= newEndTime) {
-      setAvailabilityFeedback('❌ L\'heure de début doit être avant l\'heure de fin');
+      setAvailabilityFeedback("❌ L'heure de début doit être avant l'heure de fin");
       return;
     }
     const time_slot = `${newStartTime}-${newEndTime}`;
@@ -252,7 +270,7 @@ function EspaceMedecin() {
       setNewDate('');
       setNewStartTime('09:00');
       setNewEndTime('10:00');
-      fetchAvailabilities(); // rafraîchir la liste
+      fetchAvailabilities();
     } catch (err) {
       setAvailabilityFeedback(`❌ ${err.message}`);
     } finally {
@@ -282,7 +300,104 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Répondre à un message --------------------
+  // ===== Salles de réunion =====
+  const fetchRooms = async () => {
+    setLoadingRooms(true);
+    try {
+      const res = await fetch(`${API_BASE}/meeting-rooms`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setRooms(data);
+    } catch (err) {
+      console.error('❌ fetchRooms:', err);
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  const fetchRoomBookings = async (roomId) => {
+    try {
+      const res = await fetch(`${API_BASE}/meeting-rooms/${roomId}/bookings`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setRoomBookings(data);
+    } catch (err) {
+      console.error('❌ fetchRoomBookings:', err);
+    }
+  };
+
+  const fetchMyBookings = async () => {
+    if (!medecin) return;
+    try {
+      const res = await fetch(`${API_BASE}/meeting-rooms/bookings/user/${medecin.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setMyBookings(data);
+    } catch (err) {
+      console.error('❌ fetchMyBookings:', err);
+    }
+  };
+
+  const handleBookRoom = async (e) => {
+    e.preventDefault();
+    setBookingFeedback('Envoi...');
+    try {
+      const payload = {
+        ...bookingForm,
+        booked_by: medecin.id,
+        booked_by_name: medecin.name,
+        room_id: bookingForm.is_remote ? null : bookingForm.room_id,
+      };
+      if (!payload.room_id && !payload.is_remote) {
+        setBookingFeedback('❌ Choisissez une salle ou activez "réunion à distance"');
+        return;
+      }
+      const res = await fetch(`${API_BASE}/meeting-rooms/book`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur');
+      setBookingFeedback('✅ Réservation créée !');
+      fetchMyBookings();
+      if (selectedRoom) fetchRoomBookings(selectedRoom);
+      setBookingForm({
+        title: '',
+        description: '',
+        date: '',
+        start_time: '09:00',
+        end_time: '10:00',
+        is_remote: false,
+        room_id: '',
+      });
+    } catch (err) {
+      setBookingFeedback(`❌ ${err.message}`);
+    }
+  };
+
+  const cancelBooking = async (bookingId) => {
+    if (!window.confirm('Annuler cette réservation ?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/meeting-rooms/booking/${bookingId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Erreur');
+      setBookingFeedback('✅ Réservation annulée');
+      fetchMyBookings();
+      if (selectedRoom) fetchRoomBookings(selectedRoom);
+    } catch (err) {
+      setBookingFeedback(`❌ ${err.message}`);
+    }
+  };
+
+  // ===== Répondre à un message =====
   const sendReply = async (messageId) => {
     if (!replyText.trim()) {
       setFeedback({ ...feedback, reply: 'Message vide' });
@@ -318,7 +433,7 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Nouveau message --------------------
+  // ===== Nouveau message =====
   const sendNewMessage = async (e) => {
     e.preventDefault();
 
@@ -370,7 +485,7 @@ function EspaceMedecin() {
         const uploadRes = await fetch(`${API_BASE}/upload`, {
           method: 'POST',
           body: formData,
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!uploadRes.ok) {
           const errorText = await uploadRes.text();
@@ -426,15 +541,18 @@ function EspaceMedecin() {
     }
   };
 
-  // -------------------- Effets --------------------
+  // ===== Effets =====
   useEffect(() => {
     if (medecin && token) {
       fetchMessages();
       fetchAppointments();
       fetchAvailabilities();
+      fetchRooms();
+      fetchMyBookings();
       const interval = setInterval(() => {
         fetchMessages();
         fetchAppointments();
+        fetchMyBookings();
       }, 30000);
       return () => clearInterval(interval);
     }
@@ -460,7 +578,7 @@ function EspaceMedecin() {
     setSelectedReceiverId('');
   }, [receiverType]);
 
-  // ---------------- Rendu de la page de connexion ----------------
+  // ===== Page de connexion =====
   if (!token) {
     return (
       <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
@@ -511,19 +629,10 @@ function EspaceMedecin() {
               boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)',
             }}
           >
-            <h2 style={{ textAlign: 'center', color: '#0b6e8f' }}>
-              Espace Médecin
-            </h2>
+            <h2 style={{ textAlign: 'center', color: '#0b6e8f' }}>Espace Médecin</h2>
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: '1rem' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontWeight: '600',
-                    marginBottom: '0.3rem',
-                    color: '#1e2a3a',
-                  }}
-                >
+                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                   Email
                 </label>
                 <input
@@ -540,14 +649,7 @@ function EspaceMedecin() {
                 />
               </div>
               <div style={{ marginBottom: '1rem' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontWeight: '600',
-                    marginBottom: '0.3rem',
-                    color: '#1e2a3a',
-                  }}
-                >
+                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                   Mot de passe
                 </label>
                 <input
@@ -596,14 +698,11 @@ function EspaceMedecin() {
     );
   }
 
-  if (!medecin)
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        Chargement du profil...
-      </div>
-    );
+  if (!medecin) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Chargement du profil...</div>;
+  }
 
-  // ---------------- Rendu de l'espace connecté ----------------
+  // ===== Rendu principal =====
   return (
     <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
       <video
@@ -661,9 +760,7 @@ function EspaceMedecin() {
               marginBottom: '1rem',
             }}
           >
-            <h2 style={{ margin: 0, color: '#0b6e8f' }}>
-              Bonjour Dr {escapeHtml(medecin.name)}
-            </h2>
+            <h2 style={{ margin: 0, color: '#0b6e8f' }}>Bonjour Dr {escapeHtml(medecin.name)}</h2>
             <button
               onClick={logout}
               style={{
@@ -678,6 +775,8 @@ function EspaceMedecin() {
               Déconnexion
             </button>
           </div>
+
+          {/* Barre d'onglets */}
           <div
             style={{
               display: 'flex',
@@ -687,66 +786,38 @@ function EspaceMedecin() {
               flexWrap: 'wrap',
             }}
           >
-            <button
-              onClick={() => setActiveTab('rdv')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: activeTab === 'rdv' ? 'bold' : 'normal',
-                color: activeTab === 'rdv' ? '#0b6e8f' : '#4a5568',
-                borderBottom: activeTab === 'rdv' ? '2px solid #0b6e8f' : 'none',
-              }}
-            >
-              📅 Rendez-vous
-            </button>
-            <button
-              onClick={() => setActiveTab('messages')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: activeTab === 'messages' ? 'bold' : 'normal',
-                color: activeTab === 'messages' ? '#0b6e8f' : '#4a5568',
-                borderBottom: activeTab === 'messages' ? '2px solid #0b6e8f' : 'none',
-              }}
-            >
-              Messagerie
-            </button>
-            <button
-              onClick={() => setActiveTab('newmessage')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: activeTab === 'newmessage' ? 'bold' : 'normal',
-                color: activeTab === 'newmessage' ? '#0b6e8f' : '#4a5568',
-                borderBottom: activeTab === 'newmessage' ? '2px solid #0b6e8f' : 'none',
-              }}
-            >
-              ✉️ Nouveau message
-            </button>
-            {/* 👇 NOUVEL ONGLET */}
-            <button
-              onClick={() => setActiveTab('disponibilites')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: activeTab === 'disponibilites' ? 'bold' : 'normal',
-                color: activeTab === 'disponibilites' ? '#0b6e8f' : '#4a5568',
-                borderBottom: activeTab === 'disponibilites' ? '2px solid #0b6e8f' : 'none',
-              }}
-            >
-              📋 Disponibilités
-            </button>
+            {[
+              { id: 'rdv', label: '📅 Rendez-vous' },
+              { id: 'messages', label: 'Messagerie' },
+              { id: 'newmessage', label: '✉️ Nouveau message' },
+              { id: 'disponibilites', label: '📋 Disponibilités' },
+              { id: 'meetings', label: '🏢 Salles de réunion' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'meetings') {
+                    fetchRooms();
+                    fetchMyBookings();
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                  fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+                  color: activeTab === tab.id ? '#0b6e8f' : '#4a5568',
+                  borderBottom: activeTab === tab.id ? '2px solid #0b6e8f' : 'none',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* ============== TAB : Rendez-vous ============== */}
+          {/* ===== TAB : Rendez-vous ===== */}
           {activeTab === 'rdv' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📅 Mes rendez-vous</h3>
@@ -780,9 +851,7 @@ function EspaceMedecin() {
                           <td style={{ padding: '8px' }}>
                             {rdv.teleconsultation_validated ? (
                               <button
-                                onClick={() => {
-                                  window.open(`/teleconsultation/${rdv.id}`, '_blank');
-                                }}
+                                onClick={() => window.open(`/teleconsultation/${rdv.id}`, '_blank')}
                                 style={{
                                   background: '#2ec4b6',
                                   color: 'white',
@@ -809,7 +878,7 @@ function EspaceMedecin() {
             </div>
           )}
 
-          {/* ============== TAB : Messagerie ============== */}
+          {/* ===== TAB : Messagerie ===== */}
           {activeTab === 'messages' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📬 Messagerie</h3>
@@ -818,8 +887,7 @@ function EspaceMedecin() {
                   <p style={{ color: '#4a6b80' }}>Aucun message.</p>
                 ) : (
                   messages.map((msg) => {
-                    const isUnread =
-                      !msg.is_read && msg.sender_type !== 'doctor';
+                    const isUnread = !msg.is_read && msg.sender_type !== 'doctor';
                     const isSelf = msg.sender_type === 'doctor' && msg.sender_id === medecin.id;
                     return (
                       <div
@@ -830,54 +898,25 @@ function EspaceMedecin() {
                           padding: '1rem',
                           marginBottom: '1rem',
                           backgroundColor: isUnread ? '#f0f7ff' : 'white',
-                          borderLeft: isUnread
-                            ? '4px solid #0b6e8f'
-                            : '4px solid transparent',
+                          borderLeft: isUnread ? '4px solid #0b6e8f' : '4px solid transparent',
                         }}
                       >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <strong style={{ color: '#1e2a3a' }}>
-                              {isSelf
-                                ? '👤 Moi'
-                                : escapeHtml(msg.sender_name)}
+                              {isSelf ? '👤 Moi' : escapeHtml(msg.sender_name)}
                               {msg.sender_type === 'patient' && (
-                                <span
-                                  style={{
-                                    marginLeft: '0.5rem',
-                                    fontSize: '0.8rem',
-                                    color: '#2ec4b6',
-                                  }}
-                                >
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#2ec4b6' }}>
                                   (Patient)
                                 </span>
                               )}
-                              {msg.sender_type === 'doctor' &&
-                                !isSelf && (
-                                  <span
-                                    style={{
-                                      marginLeft: '0.5rem',
-                                      fontSize: '0.8rem',
-                                      color: '#0b6e8f',
-                                    }}
-                                  >
-                                    (Médecin)
-                                  </span>
-                                )}
+                              {msg.sender_type === 'doctor' && !isSelf && (
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#0b6e8f' }}>
+                                  (Médecin)
+                                </span>
+                              )}
                             </strong>
-                            <span
-                              style={{
-                                fontSize: '0.8rem',
-                                color: '#718096',
-                                marginLeft: '0.5rem',
-                              }}
-                            >
+                            <span style={{ fontSize: '0.8rem', color: '#718096', marginLeft: '0.5rem' }}>
                               {new Date(msg.sent_date).toLocaleString()}
                             </span>
                             {isUnread && (
@@ -895,39 +934,21 @@ function EspaceMedecin() {
                               </span>
                             )}
                             {!isUnread && msg.sender_type !== 'doctor' && (
-                              <span
-                                style={{
-                                  color: '#2ec4b6',
-                                  fontSize: '0.7rem',
-                                  marginLeft: '0.5rem',
-                                }}
-                              >
+                              <span style={{ color: '#2ec4b6', fontSize: '0.7rem', marginLeft: '0.5rem' }}>
                                 ✅ Lu
                               </span>
                             )}
                           </div>
                           {msg.reply_to_id && (
-                            <span
-                              style={{ fontStyle: 'italic', color: '#2ec4b6' }}
-                            >
-                              ↳ Réponse
-                            </span>
+                            <span style={{ fontStyle: 'italic', color: '#2ec4b6' }}>↳ Réponse</span>
                           )}
                         </div>
                         {msg.sender_type === 'doctor' && msg.receiver_name && (
-                          <div
-                            style={{
-                              fontSize: '0.85rem',
-                              color: '#4a6b80',
-                              marginTop: '0.3rem',
-                            }}
-                          >
+                          <div style={{ fontSize: '0.85rem', color: '#4a6b80', marginTop: '0.3rem' }}>
                             À : {escapeHtml(msg.receiver_name)}
                           </div>
                         )}
-                        <p style={{ margin: '0.5rem 0', whiteSpace: 'pre-wrap' }}>
-                          {escapeHtml(msg.message)}
-                        </p>
+                        <p style={{ margin: '0.5rem 0', whiteSpace: 'pre-wrap' }}>{escapeHtml(msg.message)}</p>
                         {msg.attachment_url && (
                           <div style={{ margin: '0.5rem 0' }}>
                             <a
@@ -947,20 +968,9 @@ function EspaceMedecin() {
                               onChange={(e) => setReplyText(e.target.value)}
                               rows="2"
                               placeholder="Votre réponse..."
-                              style={{
-                                width: '100%',
-                                padding: '0.5rem',
-                                borderRadius: '1rem',
-                                border: '1px solid #cbd5e0',
-                              }}
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
                             />
-                            <div
-                              style={{
-                                display: 'flex',
-                                gap: '0.5rem',
-                                marginTop: '0.5rem',
-                              }}
-                            >
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                               <button
                                 onClick={() => sendReply(msg.id)}
                                 style={{
@@ -1025,59 +1035,31 @@ function EspaceMedecin() {
             </div>
           )}
 
-          {/* ============== TAB : Nouveau message ============== */}
+          {/* ===== TAB : Nouveau message ===== */}
           {activeTab === 'newmessage' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>✉️ Nouveau message</h3>
               <form
                 onSubmit={sendNewMessage}
-                style={{
-                  background: '#f1f9fe',
-                  padding: '1.5rem',
-                  borderRadius: '16px',
-                }}
+                style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px' }}
               >
-                {/* Destinataire */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: '600',
-                      marginBottom: '0.3rem',
-                      color: '#1e2a3a',
-                    }}
-                  >
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                     Destinataire
                   </label>
                   <select
                     value={receiverType}
                     onChange={(e) => setReceiverType(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '1rem',
-                      border: '1px solid #cbd5e0',
-                      background: 'white',
-                    }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0', background: 'white' }}
                   >
                     <option value="patient">👤 Patient</option>
                     <option value="doctor">👨‍⚕️ Médecin</option>
                   </select>
                 </div>
 
-                {/* Sélection du destinataire */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: '600',
-                      marginBottom: '0.3rem',
-                      color: '#1e2a3a',
-                    }}
-                  >
-                    {receiverType === 'patient'
-                      ? 'Choisir un patient'
-                      : 'Choisir un médecin'}
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                    {receiverType === 'patient' ? 'Choisir un patient' : 'Choisir un médecin'}
                   </label>
                   <select
                     value={selectedReceiverId}
@@ -1086,27 +1068,17 @@ function EspaceMedecin() {
                       setSelectedReceiverId(id);
                       if (receiverType === 'patient') {
                         const pat = patients.find((p) => p.id === parseInt(id));
-                        setSelectedReceiverName(
-                          pat ? `${pat.first_name} ${pat.last_name}` : ''
-                        );
+                        setSelectedReceiverName(pat ? `${pat.first_name} ${pat.last_name}` : '');
                       } else {
                         const doc = doctors.find((d) => d.id === parseInt(id));
                         setSelectedReceiverName(doc ? doc.full_name : '');
                       }
                     }}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '1rem',
-                      border: '1px solid #cbd5e0',
-                      background: 'white',
-                    }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0', background: 'white' }}
                   >
                     <option value="">-- Sélectionnez --</option>
                     {receiverType === 'patient' && patients.length === 0 && (
-                      <option value="" disabled>
-                        {patientsError || 'Aucun patient trouvé'}
-                      </option>
+                      <option value="" disabled>{patientsError || 'Aucun patient trouvé'}</option>
                     )}
                     {receiverType === 'patient' &&
                       patients.map((p) => (
@@ -1122,57 +1094,26 @@ function EspaceMedecin() {
                       ))}
                   </select>
                   {selectedReceiverName && (
-                    <div
-                      style={{
-                        marginTop: '0.3rem',
-                        fontSize: '0.9rem',
-                        color: '#0b6e8f',
-                        fontWeight: '500',
-                      }}
-                    >
+                    <div style={{ marginTop: '0.3rem', fontSize: '0.9rem', color: '#0b6e8f', fontWeight: '500' }}>
                       ✅ Destinataire : {escapeHtml(selectedReceiverName)}
                     </div>
                   )}
                 </div>
 
-                {/* Sujet */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: '600',
-                      marginBottom: '0.3rem',
-                      color: '#1e2a3a',
-                    }}
-                  >
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                     Motif du message
                   </label>
                   <select
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '1rem',
-                      border: '1px solid #cbd5e0',
-                      background: 'white',
-                    }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0', background: 'white' }}
                   >
-                    <option value="Demande d'information">
-                      📋 Demande d'information
-                    </option>
-                    <option value="Demande de rendez-vous">
-                      📅 Demande de rendez-vous
-                    </option>
-                    <option value="Résultats d'examens">
-                      🔬 Résultats d'examens
-                    </option>
-                    <option value="Symptômes">
-                      🤒 Symptômes / questions médicales
-                    </option>
-                    <option value="Ordonnance / renouvellement">
-                      💊 Ordonnance / renouvellement
-                    </option>
+                    <option value="Demande d'information">📋 Demande d'information</option>
+                    <option value="Demande de rendez-vous">📅 Demande de rendez-vous</option>
+                    <option value="Résultats d'examens">🔬 Résultats d'examens</option>
+                    <option value="Symptômes">🤒 Symptômes / questions médicales</option>
+                    <option value="Ordonnance / renouvellement">💊 Ordonnance / renouvellement</option>
                     <option value="Autre">✏️ Autre (précisez)</option>
                   </select>
                   {subject === 'Autre' && (
@@ -1181,27 +1122,13 @@ function EspaceMedecin() {
                       value={customSubject}
                       onChange={(e) => setCustomSubject(e.target.value)}
                       placeholder="Précisez votre motif..."
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '1rem',
-                        border: '1px solid #cbd5e0',
-                        marginTop: '0.5rem',
-                      }}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0', marginTop: '0.5rem' }}
                     />
                   )}
                 </div>
 
-                {/* Message */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: '600',
-                      marginBottom: '0.3rem',
-                      color: '#1e2a3a',
-                    }}
-                  >
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                     Message *
                   </label>
                   <textarea
@@ -1210,25 +1137,12 @@ function EspaceMedecin() {
                     rows="4"
                     required
                     placeholder="Décrivez votre demande..."
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '1rem',
-                      border: '1px solid #cbd5e0',
-                    }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
                   />
                 </div>
 
-                {/* Pièce jointe */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: '600',
-                      marginBottom: '0.3rem',
-                      color: '#1e2a3a',
-                    }}
-                  >
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
                     Pièce jointe (PDF, Word, etc.)
                   </label>
                   <input
@@ -1236,29 +1150,13 @@ function EspaceMedecin() {
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                     onChange={(e) => {
                       const file = e.target.files[0];
-                      if (file) {
-                        setAttachmentFile(file);
-                        setAttachmentPreview(file.name);
-                      } else {
-                        setAttachmentFile(null);
-                        setAttachmentPreview(null);
-                      }
+                      setAttachmentFile(file || null);
+                      setAttachmentPreview(file ? file.name : null);
                     }}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '1rem',
-                      border: '1px solid #cbd5e0',
-                    }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
                   />
                   {attachmentPreview && (
-                    <div
-                      style={{
-                        marginTop: '0.3rem',
-                        color: '#2ec4b6',
-                        fontSize: '0.9rem',
-                      }}
-                    >
+                    <div style={{ marginTop: '0.3rem', color: '#2ec4b6', fontSize: '0.9rem' }}>
                       📎 Fichier sélectionné : {escapeHtml(attachmentPreview)}
                       <button
                         type="button"
@@ -1266,13 +1164,7 @@ function EspaceMedecin() {
                           setAttachmentFile(null);
                           setAttachmentPreview(null);
                         }}
-                        style={{
-                          marginLeft: '0.5rem',
-                          background: 'none',
-                          border: 'none',
-                          color: '#dc3545',
-                          cursor: 'pointer',
-                        }}
+                        style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer' }}
                       >
                         ✖
                       </button>
@@ -1295,12 +1187,7 @@ function EspaceMedecin() {
                   Envoyer
                 </button>
                 {feedback.reply && (
-                  <div
-                    style={{
-                      marginTop: '1rem',
-                      color: feedback.reply.includes('✅') ? 'green' : 'red',
-                    }}
-                  >
+                  <div style={{ marginTop: '1rem', color: feedback.reply.includes('✅') ? 'green' : 'red' }}>
                     {feedback.reply}
                   </div>
                 )}
@@ -1308,12 +1195,11 @@ function EspaceMedecin() {
             </div>
           )}
 
-          {/* ============== TAB : Disponibilités ============== */}
+          {/* ===== TAB : Disponibilités ===== */}
           {activeTab === 'disponibilites' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📋 Gérer mes disponibilités</h3>
 
-              {/* Formulaire d'ajout */}
               <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
                 <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>➕ Ajouter un créneau</h4>
                 <form onSubmit={addAvailability} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
@@ -1370,7 +1256,6 @@ function EspaceMedecin() {
                 )}
               </div>
 
-              {/* Liste des créneaux */}
               <h4 style={{ color: '#0b6e8f' }}>📅 Mes créneaux actifs</h4>
               {loadingAvail && <p>Chargement...</p>}
               {!loadingAvail && availabilities.length === 0 && (
@@ -1422,6 +1307,262 @@ function EspaceMedecin() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ===== TAB : Salles de réunion ===== */}
+          {activeTab === 'meetings' && (
+            <div>
+              <h3 style={{ color: '#0b6e8f' }}>🏢 Salles de réunion</h3>
+
+              {/* Liste des salles */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+                {loadingRooms ? (
+                  <p>Chargement...</p>
+                ) : (
+                  rooms.map((room) => (
+                    <div
+                      key={room.id}
+                      onClick={() => {
+                        setSelectedRoom(room.id);
+                        fetchRoomBookings(room.id);
+                      }}
+                      style={{
+                        border: selectedRoom === room.id ? '2px solid #0b6e8f' : '1px solid #ccc',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        cursor: 'pointer',
+                        minWidth: '150px',
+                        background: selectedRoom === room.id ? '#f0f7ff' : 'white',
+                      }}
+                    >
+                      <h4>{room.name}</h4>
+                      <p>Capacité: {room.capacity}</p>
+                      <p>{room.equipment || '-'}</p>
+                      {room.has_video && <span style={{ color: '#2ec4b6' }}>📹 Vidéo</span>}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Formulaire de réservation */}
+              <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
+                <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>
+                  {bookingForm.is_remote ? 'Réunion à distance' : 'Réserver une salle'}
+                </h4>
+                <form onSubmit={handleBookRoom}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Titre *
+                      </label>
+                      <input
+                        type="text"
+                        value={bookingForm.title}
+                        onChange={(e) => setBookingForm({ ...bookingForm, title: e.target.value })}
+                        required
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={bookingForm.date}
+                        onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                        required
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Heure début *
+                      </label>
+                      <input
+                        type="time"
+                        value={bookingForm.start_time}
+                        onChange={(e) => setBookingForm({ ...bookingForm, start_time: e.target.value })}
+                        required
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Heure fin *
+                      </label>
+                      <input
+                        type="time"
+                        value={bookingForm.end_time}
+                        onChange={(e) => setBookingForm({ ...bookingForm, end_time: e.target.value })}
+                        required
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Salle (si réunion physique)
+                      </label>
+                      <select
+                        value={bookingForm.room_id}
+                        onChange={(e) => setBookingForm({ ...bookingForm, room_id: e.target.value })}
+                        disabled={bookingForm.is_remote}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      >
+                        <option value="">-- Choisir une salle --</option>
+                        {rooms.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={bookingForm.is_remote}
+                          onChange={(e) =>
+                            setBookingForm({ ...bookingForm, is_remote: e.target.checked, room_id: '' })
+                          }
+                        />{' '}
+                        Réunion à distance (visioconférence)
+                      </label>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Description
+                      </label>
+                      <textarea
+                        value={bookingForm.description}
+                        onChange={(e) => setBookingForm({ ...bookingForm, description: e.target.value })}
+                        rows="2"
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    style={{
+                      background: '#0b6e8f',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '2rem',
+                      cursor: 'pointer',
+                      marginTop: '1rem',
+                    }}
+                  >
+                    Réserver
+                  </button>
+                  {bookingFeedback && (
+                    <div style={{ marginTop: '0.5rem', color: bookingFeedback.includes('✅') ? 'green' : 'red' }}>
+                      {bookingFeedback}
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              {/* Réservations de la salle sélectionnée */}
+              {selectedRoom && (
+                <div>
+                  <h4>Réservations pour cette salle</h4>
+                  {roomBookings.length === 0 ? (
+                    <p>Aucune réservation.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: '#0b6e8f', color: 'white' }}>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Date</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Heure</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Titre</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Réservé par</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Lien</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {roomBookings.map((b) => (
+                            <tr key={b.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                              <td style={{ padding: '8px' }}>{b.date}</td>
+                              <td style={{ padding: '8px' }}>
+                                {b.start_time} - {b.end_time}
+                              </td>
+                              <td style={{ padding: '8px' }}>{b.title}</td>
+                              <td style={{ padding: '8px' }}>{b.booked_by_name || b.booked_by}</td>
+                              <td style={{ padding: '8px' }}>
+                                {b.meeting_link && (
+                                  <a
+                                    href={b.meeting_link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ color: '#0b6e8f' }}
+                                  >
+                                    🔗 Rejoindre
+                                  </a>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Mes réservations */}
+              <div style={{ marginTop: '2rem' }}>
+                <h4>📅 Mes réservations</h4>
+                {myBookings.length === 0 ? (
+                  <p>Aucune réservation.</p>
+                ) : (
+                  myBookings.map((b) => (
+                    <div
+                      key={b.id}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        marginBottom: '0.5rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div>
+                        <strong>{b.title}</strong> – {b.date} {b.start_time}-{b.end_time}
+                        {b.is_remote ? ' (📹 Visio)' : ` (Salle: ${b.room_name || b.room_id})`}
+                        {b.meeting_link && (
+                          <a
+                            href={b.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ marginLeft: '1rem', color: '#2ec4b6' }}
+                          >
+                            🔗 Démarrer la visio
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => cancelBooking(b.id)}
+                        style={{
+                          background: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          padding: '0.2rem 0.8rem',
+                          borderRadius: '1rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -8,7 +8,7 @@ function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("rdv");
     const [selectedPage, setSelectedPage] = useState("home");
     
-    // États pour les données
+    // États pour les données (existants)
     const [appointments, setAppointments] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [events, setEvents] = useState([]);
@@ -30,10 +30,22 @@ function AdminDashboard() {
     const [footerContent, setFooterContent] = useState({});
     const [paymentConfig, setPaymentConfig] = useState({});
     const [paiementsManuels, setPaiementsManuels] = useState([]);
-    // 👇 NOUVEL ÉTAT POUR LES MESSAGES
     const [messages, setMessages] = useState([]);
-    
-    // États pour les formulaires et modales
+
+    // Nouveaux états pour les salles de réunion (admin)
+    const [rooms, setRooms] = useState([]);
+    const [allBookings, setAllBookings] = useState([]);
+    const [roomForm, setRoomForm] = useState({ name: '', capacity: '', equipment: '', has_video: false });
+    const [editingRoom, setEditingRoom] = useState(null);
+    const [roomsFeedback, setRoomsFeedback] = useState('');
+
+    // Nouveaux états pour le personnel hospitalier
+    const [staffList, setStaffList] = useState([]);
+    const [staffForm, setStaffForm] = useState({ name: '', email: '', password: '', role: 'staff' });
+    const [editingStaff, setEditingStaff] = useState(null);
+    const [staffFeedback, setStaffFeedback] = useState('');
+
+    // États pour les formulaires et modales (existants)
     const [showJobForm, setShowJobForm] = useState(false);
     const [showEventForm, setShowEventForm] = useState(false);
     const [showSpecialtyForm, setShowSpecialtyForm] = useState(false);
@@ -47,14 +59,14 @@ function AdminDashboard() {
     const [selectedDate, setSelectedDate] = useState("");
     const [availableSlots, setAvailableSlots] = useState([]);
     
-    // États pour l'édition
+    // États pour l'édition (existants)
     const [editingPatient, setEditingPatient] = useState(null);
     const [editingDoctor, setEditingDoctor] = useState(null);
     const [editingActu, setEditingActu] = useState(null);
     const [editingEtablissement, setEditingEtablissement] = useState(null);
     const [editingPartenaire, setEditingPartenaire] = useState(null);
     
-    // Prévisualisations pour les modales d'édition
+    // Prévisualisations pour les modales d'édition (existants)
     const [editPhotoPreview, setEditPhotoPreview] = useState(null);
     const [editActuPreview, setEditActuPreview] = useState(null);
     const [editEtabPreview, setEditEtabPreview] = useState(null);
@@ -71,7 +83,7 @@ function AdminDashboard() {
         setTimeout(() => setSuccessMsg(""), 3000);
     }
     
-    // ========== CHARGEMENT DES DONNÉES ==========
+    // ========== CHARGEMENT DES DONNÉES (existantes) ==========
     const loadAppointments = async () => {
         try {
             const res = await fetch(`${API_BASE}/appointments?_=${Date.now()}`);
@@ -313,7 +325,6 @@ function AdminDashboard() {
         } catch (err) { console.error('loadSlots:', err); setAvailableSlots([]); }
     };
     
-    // 👇 NOUVELLE FONCTION DE CHARGEMENT DES MESSAGES
     const loadMessages = async () => {
         try {
             const res = await fetch(`${API_BASE}/messages`);
@@ -326,7 +337,137 @@ function AdminDashboard() {
         }
     };
     
-    // ========== SUPPRESSIONS (inchangées) ==========
+    // ========== CHARGEMENT DES NOUVELLES DONNÉES (salles et personnel) ==========
+    const loadRooms = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/meeting-rooms`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setRooms(data);
+        } catch (err) {
+            console.error('loadRooms:', err);
+        }
+    };
+
+    const loadAllBookings = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/meeting-rooms/bookings/all`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setAllBookings(data);
+        } catch (err) {
+            console.error('loadAllBookings:', err);
+        }
+    };
+
+    const loadStaffList = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/admin/staff`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setStaffList(data);
+        } catch (err) {
+            console.error('loadStaffList:', err);
+        }
+    };
+
+    // ========== GESTION DES SALLES (Admin) ==========
+    const createRoom = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_BASE}/meeting-rooms`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...roomForm, capacity: parseInt(roomForm.capacity) }),
+            });
+            if (!res.ok) throw new Error('Erreur création');
+            setRoomsFeedback('✅ Salle créée');
+            setRoomForm({ name: '', capacity: '', equipment: '', has_video: false });
+            loadRooms();
+        } catch (err) {
+            setRoomsFeedback(`❌ ${err.message}`);
+        }
+    };
+
+    const updateRoom = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_BASE}/meeting-rooms/${editingRoom.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...roomForm, capacity: parseInt(roomForm.capacity) }),
+            });
+            if (!res.ok) throw new Error('Erreur mise à jour');
+            setRoomsFeedback('✅ Salle mise à jour');
+            setEditingRoom(null);
+            setRoomForm({ name: '', capacity: '', equipment: '', has_video: false });
+            loadRooms();
+        } catch (err) {
+            setRoomsFeedback(`❌ ${err.message}`);
+        }
+    };
+
+    const deleteRoom = async (id) => {
+        if (!window.confirm('Supprimer cette salle ?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/meeting-rooms/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Erreur suppression');
+            setRoomsFeedback('✅ Salle supprimée');
+            loadRooms();
+        } catch (err) {
+            setRoomsFeedback(`❌ ${err.message}`);
+        }
+    };
+
+    // ========== GESTION DU PERSONNEL ==========
+    const createStaff = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_BASE}/admin/staff`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(staffForm),
+            });
+            if (!res.ok) throw new Error('Erreur création');
+            setStaffFeedback('✅ Personnel ajouté');
+            setStaffForm({ name: '', email: '', password: '', role: 'staff' });
+            loadStaffList();
+        } catch (err) {
+            setStaffFeedback(`❌ ${err.message}`);
+        }
+    };
+
+    const updateStaff = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_BASE}/admin/staff/${editingStaff.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(staffForm),
+            });
+            if (!res.ok) throw new Error('Erreur mise à jour');
+            setStaffFeedback('✅ Personnel mis à jour');
+            setEditingStaff(null);
+            setStaffForm({ name: '', email: '', password: '', role: 'staff' });
+            loadStaffList();
+        } catch (err) {
+            setStaffFeedback(`❌ ${err.message}`);
+        }
+    };
+
+    const deleteStaff = async (id) => {
+        if (!window.confirm('Supprimer ce compte ?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/admin/staff/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Erreur suppression');
+            setStaffFeedback('✅ Personnel supprimé');
+            loadStaffList();
+        } catch (err) {
+            setStaffFeedback(`❌ ${err.message}`);
+        }
+    };
+    
+    // ========== SUPPRESSIONS (existantes) ==========
     const deleteAppointment = async (id) => {
         if (!window.confirm("Supprimer ce rendez-vous ?")) return;
         try {
@@ -453,7 +594,7 @@ function AdminDashboard() {
         }
     };
     
-    // ========== AJOUTS ==========
+    // ========== AJOUTS (existants) ==========
     const addJob = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -766,7 +907,7 @@ function AdminDashboard() {
         } catch (err) { console.error('markAppointmentAsViewed:', err); }
     };
     
-    // ========== ÉDITIONS ==========
+    // ========== ÉDITIONS (existantes) ==========
     const updatePatient = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -1041,8 +1182,10 @@ function AdminDashboard() {
         { id: "results", label: "Résultats labo" },
         { id: "patients", label: "Patients" },
         { id: "paiements-manuels", label: "Paiements manuels" },
-        // 👇 NOUVEL ONGLET
-        { id: "messages", label: "📩 Messages" }
+        { id: "messages", label: "📩 Messages" },
+        // Nouveaux onglets
+        { id: "rooms", label: "🏢 Salles de réunion" },
+        { id: "staff", label: "👥 Personnel hospitalier" }
     ];
     
     // ========== CHARGEMENT INITIAL ==========
@@ -1067,8 +1210,11 @@ function AdminDashboard() {
         loadContent("home");
         loadDoctorsForSelect();
         loadPaiementsManuels();
-        // 👇 CHARGEMENT DES MESSAGES
         loadMessages();
+        // Nouveaux chargements
+        loadRooms();
+        loadAllBookings();
+        loadStaffList();
     }, []);
     
     // ========== RECHARGEMENT AU CHANGEMENT D'ONGLET ==========
@@ -1091,8 +1237,9 @@ function AdminDashboard() {
         if (activeTab === "stats") loadStats();
         if (activeTab === "calendar") loadAvailabilities();
         if (activeTab === "paiements-manuels") loadPaiementsManuels();
-        // 👇 RECHARGEMENT DES MESSAGES
         if (activeTab === "messages") loadMessages();
+        if (activeTab === "rooms") { loadRooms(); loadAllBookings(); }
+        if (activeTab === "staff") loadStaffList();
     }, [activeTab]);
     
     // ========== RENDU JSX ==========
@@ -2070,7 +2217,7 @@ function AdminDashboard() {
             )
         ),
         
-        // 👇 NOUVEL ONGLET : MESSAGES
+        // ===== MESSAGES =====
         activeTab === "messages" && React.createElement("div", null,
             React.createElement("h2", null, "📩 Messages reçus"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -2095,6 +2242,114 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd", maxWidth: "200px", wordWrap: "break-word" } }, escapeHtml(msg.message)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, new Date(msg.sent_date).toLocaleString()),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, msg.is_read ? "✅" : "❌")
+                        )
+                    ))
+                )
+            )
+        ),
+
+        // ===== NOUVEL ONGLET : SALLES DE RÉUNION =====
+        activeTab === "rooms" && React.createElement("div", null,
+            React.createElement("h2", null, "🏢 Salles de réunion"),
+            // Formulaire d'ajout/modification
+            React.createElement("form", { onSubmit: editingRoom ? updateRoom : createRoom, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
+                React.createElement("h4", null, editingRoom ? "Modifier la salle" : "➕ Ajouter une salle"),
+                React.createElement("input", { type: "text", placeholder: "Nom", value: roomForm.name, onChange: e => setRoomForm({...roomForm, name: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "number", placeholder: "Capacité", value: roomForm.capacity, onChange: e => setRoomForm({...roomForm, capacity: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "text", placeholder: "Équipement", value: roomForm.equipment, onChange: e => setRoomForm({...roomForm, equipment: e.target.value}), style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("label", null,
+                    React.createElement("input", { type: "checkbox", checked: roomForm.has_video, onChange: e => setRoomForm({...roomForm, has_video: e.target.checked}) }),
+                    " Vidéoconférence"
+                ),
+                React.createElement("br", null),
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, editingRoom ? "Mettre à jour" : "Ajouter"),
+                editingRoom && React.createElement("button", { type: "button", onClick: () => { setEditingRoom(null); setRoomForm({ name: '', capacity: '', equipment: '', has_video: false }); }, style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Annuler"),
+                roomsFeedback && React.createElement("div", { style: { marginTop: "10px", color: roomsFeedback.includes("✅") ? "green" : "red" } }, roomsFeedback)
+            ),
+            // Liste des salles
+            React.createElement("h3", null, "Liste des salles"),
+            React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" } },
+                rooms.map(room =>
+                    React.createElement("div", { key: room.id, style: { border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", minWidth: "150px" } },
+                        React.createElement("h4", null, room.name),
+                        React.createElement("p", null, "Capacité: ", room.capacity),
+                        React.createElement("p", null, room.equipment || "-"),
+                        room.has_video && React.createElement("span", { style: { color: "#2ec4b6" } }, "📹"),
+                        React.createElement("div", { style: { marginTop: "8px" } },
+                            React.createElement("button", { onClick: () => { setEditingRoom(room); setRoomForm({ name: room.name, capacity: room.capacity, equipment: room.equipment || '', has_video: room.has_video }); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
+                            React.createElement("button", { onClick: () => deleteRoom(room.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                        )
+                    )
+                )
+            ),
+            // Toutes les réservations
+            React.createElement("h3", null, "📅 Réservations de toutes les salles"),
+            React.createElement("div", { style: { overflowX: "auto" } },
+                React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+                    React.createElement("thead", null,
+                        React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
+                            React.createElement("th", null, "Salle"),
+                            React.createElement("th", null, "Titre"),
+                            React.createElement("th", null, "Date"),
+                            React.createElement("th", null, "Heure"),
+                            React.createElement("th", null, "Réservé par"),
+                            React.createElement("th", null, "Lien")
+                        )
+                    ),
+                    React.createElement("tbody", null, allBookings.map(b =>
+                        React.createElement("tr", { key: b.id },
+                            React.createElement("td", { style: { padding: "8px" } }, b.room_name || b.room_id),
+                            React.createElement("td", { style: { padding: "8px" } }, b.title),
+                            React.createElement("td", { style: { padding: "8px" } }, b.date),
+                            React.createElement("td", { style: { padding: "8px" } }, b.start_time + "-" + b.end_time),
+                            React.createElement("td", { style: { padding: "8px" } }, b.booked_by_name || b.booked_by),
+                            React.createElement("td", { style: { padding: "8px" } }, b.meeting_link && React.createElement("a", { href: b.meeting_link, target: "_blank", style: { color: "#0b6e8f" } }, "🔗"))
+                        )
+                    ))
+                )
+            )
+        ),
+
+        // ===== NOUVEL ONGLET : PERSONNEL HOSPITALIER =====
+        activeTab === "staff" && React.createElement("div", null,
+            React.createElement("h2", null, "👥 Personnel hospitalier"),
+            // Formulaire d'ajout/modification
+            React.createElement("form", { onSubmit: editingStaff ? updateStaff : createStaff, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
+                React.createElement("h4", null, editingStaff ? "Modifier un compte" : "➕ Ajouter un compte"),
+                React.createElement("input", { type: "text", placeholder: "Nom complet", value: staffForm.name, onChange: e => setStaffForm({...staffForm, name: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "email", placeholder: "Email", value: staffForm.email, onChange: e => setStaffForm({...staffForm, email: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "password", placeholder: "Mot de passe", value: staffForm.password, onChange: e => setStaffForm({...staffForm, password: e.target.value}), required: !editingStaff, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("select", { value: staffForm.role, onChange: e => setStaffForm({...staffForm, role: e.target.value}), style: { width: "100%", marginBottom: "8px", padding: "8px" } },
+                    React.createElement("option", { value: "staff" }, "Personnel"),
+                    React.createElement("option", { value: "admin" }, "Administrateur")
+                ),
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, editingStaff ? "Mettre à jour" : "Ajouter"),
+                editingStaff && React.createElement("button", { type: "button", onClick: () => { setEditingStaff(null); setStaffForm({ name: '', email: '', password: '', role: 'staff' }); }, style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Annuler"),
+                staffFeedback && React.createElement("div", { style: { marginTop: "10px", color: staffFeedback.includes("✅") ? "green" : "red" } }, staffFeedback)
+            ),
+            // Liste du personnel
+            React.createElement("h3", null, "Liste du personnel"),
+            React.createElement("div", { style: { overflowX: "auto" } },
+                React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+                    React.createElement("thead", null,
+                        React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
+                            React.createElement("th", null, "ID"),
+                            React.createElement("th", null, "Nom"),
+                            React.createElement("th", null, "Email"),
+                            React.createElement("th", null, "Rôle"),
+                            React.createElement("th", null, "Actions")
+                        )
+                    ),
+                    React.createElement("tbody", null, staffList.map(s =>
+                        React.createElement("tr", { key: s.id },
+                            React.createElement("td", { style: { padding: "8px" } }, s.id),
+                            React.createElement("td", { style: { padding: "8px" } }, escapeHtml(s.name)),
+                            React.createElement("td", { style: { padding: "8px" } }, escapeHtml(s.email)),
+                            React.createElement("td", { style: { padding: "8px" } }, s.role || "staff"),
+                            React.createElement("td", { style: { padding: "8px" } },
+                                React.createElement("button", { onClick: () => { setEditingStaff(s); setStaffForm({ name: s.name, email: s.email, password: '', role: s.role || 'staff' }); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
+                                React.createElement("button", { onClick: () => deleteStaff(s.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                            )
                         )
                     ))
                 )

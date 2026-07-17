@@ -55,6 +55,7 @@ app.use('/api/newsletter', require('./routes/newsletter'));
 // ========== ROUTES CHECKUP ==========
 app.use('/api/checkup-requests', require('./routes/checkup'));
 app.use('/api/availability', require('./routes/availability'));
+app.use('/api/meeting-rooms', require('./routes/meeting-rooms'));
 
 // ========== ROUTE UPLOAD ==========
 app.use('/api/upload', require('./routes/upload'));
