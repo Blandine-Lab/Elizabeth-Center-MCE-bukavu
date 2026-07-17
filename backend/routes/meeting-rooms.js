@@ -19,6 +19,7 @@ router.get('/', async (req, res) => {
 
 // POST /api/meeting-rooms – Créer une salle (admin)
 router.post('/', async (req, res) => {
+  console.log('📥 POST /meeting-rooms reçu :', req.body);
   try {
     const { name, capacity, equipment, has_video } = req.body;
     if (!name || !capacity) {
@@ -31,8 +32,11 @@ router.post('/', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('POST /meeting-rooms error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('❌ POST /meeting-rooms error:', err);
+    console.error('  Message:', err.message);
+    console.error('  Code:', err.code);
+    console.error('  Detail:', err.detail);
+    res.status(500).json({ error: err.message, code: err.code, detail: err.detail });
   }
 });
 
@@ -121,6 +125,7 @@ router.get('/bookings/all', async (req, res) => {
 
 // POST /api/meeting-rooms/book – Créer une réservation
 router.post('/book', async (req, res) => {
+  console.log('📥 POST /meeting-rooms/book reçu :', req.body);
   try {
     const { room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote } = req.body;
     if (!booked_by || !title || !date || !start_time || !end_time) {
@@ -145,7 +150,6 @@ router.post('/book', async (req, res) => {
       }
     }
 
-    // Générer un lien Jitsi pour les réunions à distance
     let meeting_link = null;
     if (is_remote) {
       const roomName = `mce-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
