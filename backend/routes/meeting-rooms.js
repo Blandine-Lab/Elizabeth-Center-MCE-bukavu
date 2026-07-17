@@ -168,22 +168,22 @@ router.get('/bookings/all', async (req, res) => {
 
 // ============================================================
 // GET /api/meeting-rooms/bookings/user/:userId – Réservations d'un utilisateur
-// Version définitive avec colonne jsonb
+// CORRECTION : utilisation de @> pour comparer des nombres dans le tableau JSONB
 // ============================================================
 router.get('/bookings/user/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
 
-    // invited_ids est maintenant un jsonb, on utilise l'opérateur '?' pour tester l'appartenance
+    // L'opérateur @> vérifie si le tableau contient la valeur donnée (en tant que nombre)
     const result = await pool.query(
       `SELECT b.*, r.name as room_name 
        FROM room_bookings b
        LEFT JOIN meeting_rooms r ON b.room_id = r.id
-       WHERE (b.booked_by = $1 OR b.invited_ids ? $2::text)
+       WHERE (b.booked_by = $1 OR b.invited_ids @> to_jsonb($1))
          AND b.status = 'confirmed'
        ORDER BY b.date ASC, b.start_time ASC`,
-      [userId, userId.toString()]
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {
