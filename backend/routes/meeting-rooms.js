@@ -168,23 +168,22 @@ router.get('/bookings/all', async (req, res) => {
 
 // ============================================================
 // GET /api/meeting-rooms/bookings/user/:userId – Réservations d'un utilisateur
-// CORRECTION : Suppression du cast inutile ::jsonb et utilisation correcte de l'opérateur ?
+// Version définitive avec colonne jsonb
 // ============================================================
 router.get('/bookings/user/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
 
-    // La colonne invited_ids est déjà de type jsonb. L'opérateur ? s'utilise directement.
-    // On vérifie si l'utilisateur est le créateur (booked_by) ou s'il est dans le tableau invited_ids.
+    // invited_ids est maintenant un jsonb, on utilise l'opérateur '?' pour tester l'appartenance
     const result = await pool.query(
       `SELECT b.*, r.name as room_name 
        FROM room_bookings b
        LEFT JOIN meeting_rooms r ON b.room_id = r.id
-       WHERE (b.booked_by = $1 OR COALESCE(b.invited_ids ? $1::text, false))
+       WHERE (b.booked_by = $1 OR b.invited_ids ? $2::text)
          AND b.status = 'confirmed'
        ORDER BY b.date ASC, b.start_time ASC`,
-      [userId]
+      [userId, userId.toString()]
     );
     res.json(result.rows);
   } catch (err) {
@@ -198,7 +197,7 @@ router.get('/bookings/user/:userId', async (req, res) => {
 
 // ============================================================
 // POST /api/meeting-rooms/book – Créer une réservation (avec invited_ids)
-// CORRECTION : Sérialisation systématique de invited_ids en JSON valide
+// Version définitive avec insertion en jsonb
 // ============================================================
 router.post('/book', async (req, res) => {
   console.log('📥 POST /meeting-rooms/book reçu :', req.body);
@@ -265,18 +264,17 @@ router.post('/book', async (req, res) => {
           invitedIdsArray = invited_ids.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
         }
       } else if (typeof invited_ids === 'number') {
-        // Si un seul ID est envoyé, on le met dans un tableau
         invitedIdsArray = [invited_ids];
       }
     }
-    // 2. Convertir le tableau en chaîne JSON (obligatoire pour que pg l'interprète comme jsonb)
+    // 2. Convertir en chaîne JSON (obligatoire pour que pg l'interprète comme jsonb)
     const invitedIdsJsonString = JSON.stringify(invitedIdsArray);
 
-    // Insertion
+    // Insertion avec conversion explicite en jsonb
     const result = await pool.query(
       `INSERT INTO room_bookings 
        (room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote, meeting_link, invited_emails, invited_ids)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb)
        RETURNING *`,
       [
         room_id || null,
@@ -290,7 +288,7 @@ router.post('/book', async (req, res) => {
         is_remote || false,
         meeting_link,
         invited_emails || null,
-        invitedIdsJsonString   // ← chaîne JSON valide
+        invitedIdsJsonString   // chaîne JSON valide
       ]
     );
 
