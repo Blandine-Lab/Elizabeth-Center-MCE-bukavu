@@ -172,19 +172,23 @@ router.get('/bookings/user/:userId', async (req, res) => {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
 
+    // Utilisation de COALESCE pour gérer les NULL et conversion en jsonb
     const result = await pool.query(
       `SELECT b.*, r.name as room_name 
        FROM room_bookings b
        LEFT JOIN meeting_rooms r ON b.room_id = r.id
-       WHERE (b.booked_by = $1 OR b.invited_ids ? $1) 
+       WHERE (b.booked_by = $1 OR COALESCE(b.invited_ids::jsonb ? $1, false))
          AND b.status = 'confirmed'
        ORDER BY b.date ASC, b.start_time ASC`,
       [userId]
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('GET /bookings/user/:userId error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('❌ GET /bookings/user/:userId error:', err);
+    console.error('  Message:', err.message);
+    console.error('  Code:', err.code);
+    console.error('  Detail:', err.detail);
+    res.status(500).json({ error: err.message, code: err.code, detail: err.detail });
   }
 });
 
@@ -236,6 +240,9 @@ router.post('/book', async (req, res) => {
       meeting_link = `https://meet.jit.si/${roomName}`;
     }
 
+    // Si invited_ids est undefined ou null, on utilise un tableau vide
+    const invitedIdsJson = invited_ids ? invited_ids : [];
+
     // Insertion avec invited_ids (JSONB)
     const result = await pool.query(
       `INSERT INTO room_bookings 
@@ -254,7 +261,7 @@ router.post('/book', async (req, res) => {
         is_remote || false,
         meeting_link,
         invited_emails || null,
-        invited_ids || []   // tableau d'IDs
+        invitedIdsJson
       ]
     );
 
