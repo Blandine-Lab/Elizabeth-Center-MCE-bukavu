@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-const LOGIN_URL = `${API_BASE}/staff/login`; // endpoint à créer dans le backend
+const LOGIN_URL = `${API_BASE}/staff/login`;
 
 function EspacePersonnel() {
   const [token, setToken] = useState(localStorage.getItem('staffToken'));
@@ -32,9 +32,12 @@ function EspacePersonnel() {
   const [bookingFeedback, setBookingFeedback] = useState('');
   const [loadingRooms, setLoadingRooms] = useState(false);
 
-  // Messages (lecture uniquement pour le personnel, ou réponse limitée)
+  // États pour la messagerie
   const [replyText, setReplyText] = useState('');
   const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [newMessage, setNewMessage] = useState({ doctor_id: '', subject: '', content: '' });
+  const [newMessageFeedback, setNewMessageFeedback] = useState('');
 
   function escapeHtml(str) {
     if (!str) return '';
@@ -114,6 +117,19 @@ function EspacePersonnel() {
       setMessages(data);
     } catch (err) {
       console.error('❌ fetchMessages staff:', err);
+    }
+  };
+
+  // Charger les médecins
+  const fetchDoctors = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/staff`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const medecins = data.filter((d) => d.profession === 'Médecin' && d.active);
+      setDoctors(medecins);
+    } catch (err) {
+      console.error('Erreur chargement médecins:', err);
     }
   };
 
@@ -214,7 +230,7 @@ function EspacePersonnel() {
     }
   };
 
-  // Répondre à un message (optionnel)
+  // Répondre à un message
   const sendReply = async (messageId) => {
     if (!replyText.trim()) {
       setFeedback({ ...feedback, action: 'Message vide' });
@@ -250,12 +266,53 @@ function EspacePersonnel() {
     }
   };
 
+  // Envoyer un nouveau message à un médecin
+  const sendNewMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.doctor_id || !newMessage.content) {
+      setNewMessageFeedback('Veuillez choisir un médecin et écrire un message.');
+      return;
+    }
+    const selectedDoctor = doctors.find(d => d.id === parseInt(newMessage.doctor_id));
+    setNewMessageFeedback('Envoi...');
+    try {
+      const res = await fetch(`${API_BASE}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sender_type: 'staff',
+          sender_id: staff.id,
+          sender_name: staff.name,
+          receiver_type: 'doctor',
+          receiver_id: parseInt(newMessage.doctor_id),
+          receiver_name: selectedDoctor ? selectedDoctor.full_name : 'Médecin',
+          subject: newMessage.subject || 'Demande du personnel',
+          message: newMessage.content,
+          attachment_url: null,
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erreur HTTP ${res.status}`);
+      }
+      setNewMessageFeedback('✅ Message envoyé');
+      setNewMessage({ doctor_id: '', subject: '', content: '' });
+      fetchMessages();
+    } catch (err) {
+      setNewMessageFeedback(`❌ ${err.message}`);
+    }
+  };
+
   // Effets
   useEffect(() => {
     if (staff && token) {
       fetchMessages();
       fetchRooms();
       fetchMyBookings();
+      fetchDoctors();
       const interval = setInterval(() => {
         fetchMessages();
         fetchMyBookings();
@@ -484,7 +541,7 @@ function EspacePersonnel() {
           >
             {[
               { id: 'rooms', label: '🏢 Salles' },
-              { id: 'messages', label: '📬 Messages' },
+              { id: 'messages', label: '📬 Messagerie' },
               { id: 'mybookings', label: '📅 Mes réservations' },
             ].map((tab) => (
               <button
@@ -538,7 +595,7 @@ function EspacePersonnel() {
                 )}
               </div>
 
-              {/* Formulaire réservation */}
+              {/* Formulaire réservation (identique) */}
               <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
                 <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>
                   {bookingForm.is_remote ? 'Réunion à distance' : 'Réserver une salle'}
@@ -707,10 +764,80 @@ function EspacePersonnel() {
             </div>
           )}
 
-          {/* TAB : Messages */}
+          {/* TAB : Messagerie (avec envoi de nouveau message) */}
           {activeTab === 'messages' && (
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📬 Messagerie</h3>
+
+              {/* Formulaire d'envoi de nouveau message */}
+              <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
+                <h4>✉️ Envoyer un message à un médecin</h4>
+                <form onSubmit={sendNewMessage}>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                      Médecin destinataire *
+                    </label>
+                    <select
+                      value={newMessage.doctor_id}
+                      onChange={(e) => setNewMessage({ ...newMessage, doctor_id: e.target.value })}
+                      required
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
+                    >
+                      <option value="">-- Choisir un médecin --</option>
+                      {doctors.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          Dr {doc.full_name} ({doc.specialty || doc.profession})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                      Sujet
+                    </label>
+                    <input
+                      type="text"
+                      value={newMessage.subject}
+                      onChange={(e) => setNewMessage({ ...newMessage, subject: e.target.value })}
+                      placeholder="Objet du message"
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                      Message *
+                    </label>
+                    <textarea
+                      value={newMessage.content}
+                      onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+                      rows="4"
+                      required
+                      placeholder="Décrivez votre demande..."
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    style={{
+                      background: '#0b6e8f',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '2rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Envoyer
+                  </button>
+                  {newMessageFeedback && (
+                    <div style={{ marginTop: '0.5rem', color: newMessageFeedback.includes('✅') ? 'green' : 'red' }}>
+                      {newMessageFeedback}
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              {/* Liste des messages */}
               <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
                 {messages.length === 0 ? (
                   <p style={{ color: '#4a6b80' }}>Aucun message.</p>
