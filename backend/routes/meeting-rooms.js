@@ -14,8 +14,12 @@ if (!apiKey) {
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
 
+// Fonction d'envoi d'email d'invitation
 async function sendInvitationEmails(emails, title, date, start_time, end_time, link) {
-  if (!apiKey) return;
+  if (!apiKey) {
+    console.warn('❌ Clé API Brevo manquante, invitation non envoyée');
+    return;
+  }
   const subject = `Invitation à la réunion : ${title}`;
   const html = `
     <h2>Invitation à une réunion</h2>
@@ -42,9 +46,13 @@ async function sendInvitationEmails(emails, title, date, start_time, end_time, l
 }
 
 // ===== SALLES =====
+
+// GET /api/meeting-rooms – Liste des salles actives
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM meeting_rooms WHERE active = true ORDER BY name');
+    const result = await pool.query(
+      'SELECT * FROM meeting_rooms WHERE active = true ORDER BY name'
+    );
     res.json(result.rows);
   } catch (err) {
     console.error('GET /meeting-rooms error:', err);
@@ -52,11 +60,14 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST /api/meeting-rooms – Créer une salle (admin)
 router.post('/', async (req, res) => {
   console.log('📥 POST /meeting-rooms reçu :', req.body);
   try {
     const { name, capacity, equipment, has_video } = req.body;
-    if (!name || !capacity) return res.status(400).json({ error: 'Nom et capacité requis' });
+    if (!name || !capacity) {
+      return res.status(400).json({ error: 'Nom et capacité requis' });
+    }
     const result = await pool.query(
       `INSERT INTO meeting_rooms (name, capacity, equipment, has_video, active)
        VALUES ($1, $2, $3, $4, true) RETURNING *`,
@@ -65,10 +76,14 @@ router.post('/', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('❌ POST /meeting-rooms error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('  Message:', err.message);
+    console.error('  Code:', err.code);
+    console.error('  Detail:', err.detail);
+    res.status(500).json({ error: err.message, code: err.code, detail: err.detail });
   }
 });
 
+// PUT /api/meeting-rooms/:id – Modifier une salle
 router.put('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -83,7 +98,9 @@ router.put('/:id', async (req, res) => {
        WHERE id = $6 RETURNING *`,
       [name, capacity, equipment, has_video, active, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Salle non trouvée' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Salle non trouvée' });
+    }
     res.json(result.rows[0]);
   } catch (err) {
     console.error('PUT /meeting-rooms/:id error:', err);
@@ -91,6 +108,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/meeting-rooms/:id – Désactiver une salle
 router.delete('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -98,7 +116,9 @@ router.delete('/:id', async (req, res) => {
       'UPDATE meeting_rooms SET active = false WHERE id = $1 RETURNING *',
       [id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Salle non trouvée' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Salle non trouvée' });
+    }
     res.json({ message: 'Salle désactivée', room: result.rows[0] });
   } catch (err) {
     console.error('DELETE /meeting-rooms/:id error:', err);
@@ -107,6 +127,8 @@ router.delete('/:id', async (req, res) => {
 });
 
 // ===== RÉSERVATIONS =====
+
+// GET /api/meeting-rooms/:roomId/bookings – Réservations d'une salle
 router.get('/:roomId/bookings', async (req, res) => {
   try {
     const roomId = parseInt(req.params.roomId);
@@ -126,6 +148,7 @@ router.get('/:roomId/bookings', async (req, res) => {
   }
 });
 
+// GET /api/meeting-rooms/bookings/all – Toutes les réservations (admin)
 router.get('/bookings/all', async (req, res) => {
   try {
     const result = await pool.query(
@@ -143,31 +166,40 @@ router.get('/bookings/all', async (req, res) => {
   }
 });
 
-// ===== ROUTE CORRIGÉE (avec @>) =====
+// ============================================================
+// GET /api/meeting-rooms/bookings/user/:userId – Réservations d'un utilisateur
+// CORRECTION : Suppression du cast inutile ::jsonb et utilisation correcte de l'opérateur ?
+// ============================================================
 router.get('/bookings/user/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
 
+    // La colonne invited_ids est déjà de type jsonb. L'opérateur ? s'utilise directement.
+    // On vérifie si l'utilisateur est le créateur (booked_by) ou s'il est dans le tableau invited_ids.
     const result = await pool.query(
       `SELECT b.*, r.name as room_name 
        FROM room_bookings b
        LEFT JOIN meeting_rooms r ON b.room_id = r.id
-       WHERE (b.booked_by = $1 OR (b.invited_ids @> $2::jsonb))
+       WHERE (b.booked_by = $1 OR COALESCE(b.invited_ids ? $1::text, false))
          AND b.status = 'confirmed'
        ORDER BY b.date ASC, b.start_time ASC`,
-      [userId, JSON.stringify([userId])]
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {
     console.error('❌ GET /bookings/user/:userId error:', err);
     console.error('  Message:', err.message);
+    console.error('  Code:', err.code);
     console.error('  Detail:', err.detail);
     res.status(500).json({ error: err.message, code: err.code, detail: err.detail });
   }
 });
 
-// ===== ROUTE POST /book (avec validation de invited_ids) =====
+// ============================================================
+// POST /api/meeting-rooms/book – Créer une réservation (avec invited_ids)
+// CORRECTION : Sérialisation systématique de invited_ids en JSON valide
+// ============================================================
 router.post('/book', async (req, res) => {
   console.log('📥 POST /meeting-rooms/book reçu :', req.body);
   try {
@@ -185,6 +217,7 @@ router.post('/book', async (req, res) => {
       invited_ids
     } = req.body;
 
+    // Validation
     if (!booked_by || !title || !date || !start_time || !end_time) {
       return res.status(400).json({ error: 'Champs obligatoires manquants' });
     }
@@ -192,6 +225,7 @@ router.post('/book', async (req, res) => {
       return res.status(400).json({ error: 'Choisissez une salle ou activez "réunion à distance"' });
     }
 
+    // Vérification des conflits (uniquement si salle physique)
     if (!is_remote && room_id) {
       const conflict = await pool.query(
         `SELECT * FROM room_bookings 
@@ -206,15 +240,39 @@ router.post('/book', async (req, res) => {
       }
     }
 
+    // Génération du lien Jitsi (pour réunion à distance)
     let meeting_link = null;
     if (is_remote) {
       const roomName = `mce-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       meeting_link = `https://meet.jit.si/${roomName}`;
     }
 
-    // S'assurer que invited_ids est un tableau valide
-    const invitedIdsJson = (Array.isArray(invited_ids)) ? invited_ids : [];
+    // ------------------------------------------------------------
+    // 1. Normalisation de invited_ids en un tableau d'entiers
+    // ------------------------------------------------------------
+    let invitedIdsArray = [];
+    if (invited_ids) {
+      if (Array.isArray(invited_ids)) {
+        invitedIdsArray = invited_ids;
+      } else if (typeof invited_ids === 'string') {
+        try {
+          const parsed = JSON.parse(invited_ids);
+          if (Array.isArray(parsed)) {
+            invitedIdsArray = parsed;
+          }
+        } catch {
+          // Si le string n'est pas du JSON, on le traite comme une liste séparée par des virgules
+          invitedIdsArray = invited_ids.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        }
+      } else if (typeof invited_ids === 'number') {
+        // Si un seul ID est envoyé, on le met dans un tableau
+        invitedIdsArray = [invited_ids];
+      }
+    }
+    // 2. Convertir le tableau en chaîne JSON (obligatoire pour que pg l'interprète comme jsonb)
+    const invitedIdsJsonString = JSON.stringify(invitedIdsArray);
 
+    // Insertion
     const result = await pool.query(
       `INSERT INTO room_bookings 
        (room_id, booked_by, booked_by_name, title, description, date, start_time, end_time, is_remote, meeting_link, invited_emails, invited_ids)
@@ -232,10 +290,11 @@ router.post('/book', async (req, res) => {
         is_remote || false,
         meeting_link,
         invited_emails || null,
-        invitedIdsJson
+        invitedIdsJsonString   // ← chaîne JSON valide
       ]
     );
 
+    // Envoi des invitations par email (si des emails sont fournis)
     if (invited_emails) {
       const emails = invited_emails.split(',').map(e => e.trim()).filter(e => e);
       if (emails.length > 0 && meeting_link) {
@@ -247,11 +306,13 @@ router.post('/book', async (req, res) => {
   } catch (err) {
     console.error('❌ POST /book error:', err);
     console.error('  Message:', err.message);
+    console.error('  Code:', err.code);
     console.error('  Detail:', err.detail);
     res.status(500).json({ error: err.message, code: err.code, detail: err.detail });
   }
 });
 
+// DELETE /api/meeting-rooms/booking/:id – Annuler une réservation
 router.delete('/booking/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -259,7 +320,9 @@ router.delete('/booking/:id', async (req, res) => {
       'UPDATE room_bookings SET status = $1 WHERE id = $2 RETURNING *',
       ['cancelled', id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Réservation non trouvée' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Réservation non trouvée' });
+    }
     res.json({ message: 'Réservation annulée', booking: result.rows[0] });
   } catch (err) {
     console.error('DELETE /booking/:id error:', err);
