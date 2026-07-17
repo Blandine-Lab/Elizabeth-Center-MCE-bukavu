@@ -172,8 +172,6 @@ router.get('/bookings/user/:userId', async (req, res) => {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) return res.status(400).json({ error: 'ID invalide' });
 
-    // On récupère les réservations où l'utilisateur est soit le créateur (booked_by),
-    // soit présent dans le tableau invited_ids (JSONB)
     const result = await pool.query(
       `SELECT b.*, r.name as room_name 
        FROM room_bookings b
@@ -205,7 +203,7 @@ router.post('/book', async (req, res) => {
       end_time,
       is_remote,
       invited_emails,
-      invited_ids      // nouveau champ : tableau d'IDs (JSONB)
+      invited_ids
     } = req.body;
 
     // Validation
@@ -256,7 +254,7 @@ router.post('/book', async (req, res) => {
         is_remote || false,
         meeting_link,
         invited_emails || null,
-        invited_ids || []   // valeur par défaut : tableau vide
+        invited_ids || []   // tableau d'IDs
       ]
     );
 
