@@ -28,7 +28,7 @@ function EspacePersonnel() {
     end_time: '10:00',
     is_remote: false,
     room_id: '',
-    invited_emails: '', // 👈 Ajouté pour les invitations
+    invited_emails: '',
   });
   const [bookingFeedback, setBookingFeedback] = useState('');
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -39,6 +39,10 @@ function EspacePersonnel() {
   const [doctors, setDoctors] = useState([]);
   const [newMessage, setNewMessage] = useState({ doctor_id: '', subject: '', content: '' });
   const [newMessageFeedback, setNewMessageFeedback] = useState('');
+
+  // États pour les invités (nouveau)
+  const [staffList, setStaffList] = useState([]);
+  const [selectedInvitees, setSelectedInvitees] = useState([]);
 
   function escapeHtml(str) {
     if (!str) return '';
@@ -134,6 +138,20 @@ function EspacePersonnel() {
     }
   };
 
+  // Charger le personnel (pour les invitations)
+  const fetchStaffList = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/staff`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setStaffList(data);
+    } catch (err) {
+      console.error('❌ fetchStaffList:', err);
+    }
+  };
+
   // Salles
   const fetchRooms = async () => {
     setLoadingRooms(true);
@@ -174,6 +192,18 @@ function EspacePersonnel() {
     }
   };
 
+  // Gestion des invités
+  const handleInviteeChange = (e) => {
+    const options = e.target.options;
+    const values = [];
+    for (let i = 0; i < options.length; i++) {
+      if (options[i].selected) {
+        values.push(parseInt(options[i].value));
+      }
+    }
+    setSelectedInvitees(values);
+  };
+
   const handleBookRoom = async (e) => {
     e.preventDefault();
     setBookingFeedback('Envoi...');
@@ -184,6 +214,7 @@ function EspacePersonnel() {
         booked_by_name: staff.name,
         room_id: bookingForm.is_remote ? null : bookingForm.room_id,
         invited_emails: bookingForm.invited_emails || null,
+        invited_ids: selectedInvitees, // 👈 nouveau
       };
       if (!payload.room_id && !payload.is_remote) {
         setBookingFeedback('❌ Choisissez une salle ou activez "réunion à distance"');
@@ -212,6 +243,7 @@ function EspacePersonnel() {
         room_id: '',
         invited_emails: '',
       });
+      setSelectedInvitees([]);
     } catch (err) {
       setBookingFeedback(`❌ ${err.message}`);
     }
@@ -316,6 +348,7 @@ function EspacePersonnel() {
       fetchRooms();
       fetchMyBookings();
       fetchDoctors();
+      fetchStaffList(); // 👈 nouveau
       const interval = setInterval(() => {
         fetchMessages();
         fetchMyBookings();
@@ -546,7 +579,6 @@ function EspacePersonnel() {
               { id: 'rooms', label: '🏢 Salles' },
               { id: 'messages', label: '📬 Messagerie' },
               { id: 'mybookings', label: '📅 Mes réservations' },
-              // 👇 Nouvel onglet
               { id: 'my-meetings', label: '📅 Mes réunions' },
             ].map((tab) => (
               <button
@@ -608,7 +640,7 @@ function EspacePersonnel() {
                 )}
               </div>
 
-              {/* Formulaire réservation avec invitations */}
+              {/* Formulaire réservation avec invitations et sélection multiple */}
               <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
                 <h4 style={{ marginTop: 0, color: '#0b6e8f' }}>
                   {bookingForm.is_remote ? 'Réunion à distance' : 'Réserver une salle'}
@@ -704,10 +736,10 @@ function EspacePersonnel() {
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
                       />
                     </div>
-                    {/* 👇 Champ pour les invitations */}
+                    {/* 👇 Champ pour les invitations (emails) */}
                     <div style={{ gridColumn: 'span 2' }}>
                       <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
-                        Inviter des participants (emails séparés par des virgules)
+                        Inviter par email (séparés par des virgules)
                       </label>
                       <textarea
                         value={bookingForm.invited_emails}
@@ -716,6 +748,36 @@ function EspacePersonnel() {
                         placeholder="exemple@email.com, autre@email.com"
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}
                       />
+                    </div>
+                    {/* 👇 NOUVEAU : sélection multiple de participants */}
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
+                        Inviter des participants (médecins / personnel)
+                      </label>
+                      <select
+                        multiple
+                        value={selectedInvitees}
+                        onChange={handleInviteeChange}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', minHeight: '80px' }}
+                      >
+                        <optgroup label="Médecins">
+                          {doctors.map((doc) => (
+                            <option key={doc.id} value={doc.id}>
+                              Dr {doc.full_name} ({doc.specialty || 'Généraliste'})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Personnel">
+                          {staffList.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.role || 'staff'})
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                      <div style={{ fontSize: '0.8rem', color: '#6c757d', marginTop: '0.2rem' }}>
+                        Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs participants.
+                      </div>
                     </div>
                   </div>
                   <button
@@ -1028,6 +1090,16 @@ function EspacePersonnel() {
                           🔗 Démarrer la visio
                         </a>
                       )}
+                      {/* Afficher les invités si présents */}
+                      {b.invited_ids && b.invited_ids.length > 0 && (
+                        <div style={{ fontSize: '0.8rem', color: '#6c757d', marginTop: '0.2rem' }}>
+                          Invités : {b.invited_ids.map(id => {
+                            const doc = doctors.find(d => d.id === id);
+                            const staffMember = staffList.find(s => s.id === id);
+                            return doc ? `Dr ${doc.full_name}` : staffMember ? staffMember.name : id;
+                          }).join(', ')}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => cancelBooking(b.id)}
@@ -1082,6 +1154,16 @@ function EspacePersonnel() {
                         <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.1rem' }}>
                           {b.is_remote ? '📹 Visioconférence' : `🏢 Salle : ${b.room_name || b.room_id}`}
                         </div>
+                        {/* Afficher les invités */}
+                        {b.invited_ids && b.invited_ids.length > 0 && (
+                          <div style={{ fontSize: '0.8rem', color: '#6c757d', marginTop: '0.2rem' }}>
+                            Invités : {b.invited_ids.map(id => {
+                              const doc = doctors.find(d => d.id === id);
+                              const staffMember = staffList.find(s => s.id === id);
+                              return doc ? `Dr ${doc.full_name}` : staffMember ? staffMember.name : id;
+                            }).join(', ')}
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         {b.meeting_link ? (
