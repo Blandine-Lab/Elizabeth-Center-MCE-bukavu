@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+// On retire '/api' pour obtenir la base des fichiers statiques (uploads)
+const MEDIA_BASE = API_BASE.replace('/api', '');
 
 function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("rdv");
@@ -45,7 +47,7 @@ function AdminDashboard() {
     const [editingStaff, setEditingStaff] = useState(null);
     const [staffFeedback, setStaffFeedback] = useState('');
 
-    // 👇 État pour les informations patients
+    // État pour les informations patients
     const [infoPatientsContent, setInfoPatientsContent] = useState({
         horaires: '',
         repas: '',
@@ -76,7 +78,7 @@ function AdminDashboard() {
     const [editingEtablissement, setEditingEtablissement] = useState(null);
     const [editingPartenaire, setEditingPartenaire] = useState(null);
     
-    // Prévisualisations pour les modales d'édition (existants)
+    // Prévisualisations pour les modales d'édition
     const [editPhotoPreview, setEditPhotoPreview] = useState(null);
     const [editActuPreview, setEditActuPreview] = useState(null);
     const [editEtabPreview, setEditEtabPreview] = useState(null);
@@ -1239,7 +1241,6 @@ function AdminDashboard() {
         { id: "messages", label: "📩 Messages" },
         { id: "rooms", label: "🏢 Salles de réunion" },
         { id: "staff", label: "👥 Personnel hospitalier" },
-        // 👇 Nouvel onglet
         { id: "infos-patients", label: "📋 Infos patients" }
     ];
     
@@ -1269,7 +1270,7 @@ function AdminDashboard() {
         loadRooms();
         loadAllBookings();
         loadStaffList();
-        loadInfoPatients(); // 👈 Chargement initial
+        loadInfoPatients();
     }, []);
     
     // ========== RECHARGEMENT AU CHANGEMENT D'ONGLET ==========
@@ -1295,7 +1296,7 @@ function AdminDashboard() {
         if (activeTab === "messages") loadMessages();
         if (activeTab === "rooms") { loadRooms(); loadAllBookings(); }
         if (activeTab === "staff") loadStaffList();
-        if (activeTab === "infos-patients") loadInfoPatients(); // 👈 Rechargement au changement d'onglet
+        if (activeTab === "infos-patients") loadInfoPatients();
     }, [activeTab]);
     
     // ========== RENDU JSX ==========
@@ -1588,7 +1589,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.id),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.full_name)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.specialty || d.profession)),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.photo_url ? React.createElement("img", { src: d.photo_url, style: { width: "40px", height: "40px", borderRadius: "50%" } }) : "-"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.photo_url ? React.createElement("img", { src: `${MEDIA_BASE}/${d.photo_url}`, style: { width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" } }) : "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.telegram_chat_id || "-")),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.active ? "✅" : "❌"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
@@ -1616,7 +1617,7 @@ function AdminDashboard() {
                     React.createElement("div", { style: { marginBottom: "8px" } },
                         React.createElement("label", null, "Photo actuelle : "),
                         editingDoctor.photo_url ? 
-                            React.createElement("img", { src: editingDoctor.photo_url, style: { width: "60px", height: "60px", borderRadius: "50%", marginLeft: "10px" } }) :
+                            React.createElement("img", { src: `${MEDIA_BASE}/${editingDoctor.photo_url}`, style: { width: "60px", height: "60px", borderRadius: "50%", objectFit: "cover", marginLeft: "10px" } }) :
                             React.createElement("span", null, "Aucune photo")
                     ),
                     React.createElement("input", { type: "file", name: "photo", accept: "image/*", onChange: (e) => {
@@ -1626,7 +1627,7 @@ function AdminDashboard() {
                             reader.readAsDataURL(e.target.files[0]);
                         }
                     }, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                    editPhotoPreview && React.createElement("img", { src: editPhotoPreview, style: { width: "60px", height: "60px", borderRadius: "50%", marginBottom: "8px" }, alt: "Nouvelle photo" }),
+                    editPhotoPreview && React.createElement("img", { src: editPhotoPreview, style: { width: "60px", height: "60px", borderRadius: "50%", objectFit: "cover", marginBottom: "8px" }, alt: "Nouvelle photo" }),
                     React.createElement("input", { type: "password", name: "password", placeholder: "Nouveau mot de passe (laisser vide pour inchangé)", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("label", { style: { display: "block", marginBottom: "8px" } },
                         React.createElement("input", { type: "checkbox", name: "active", defaultChecked: editingDoctor.active === 1 }),
@@ -1745,7 +1746,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.id),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(actu.titre)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(actu.description)),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.image_url ? React.createElement("img", { src: actu.image_url, style: { width: "40px", height: "40px", borderRadius: "8px" } }) : "-"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.image_url ? React.createElement("img", { src: `${MEDIA_BASE}/${actu.image_url}`, style: { width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" } }) : "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.ordre),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.active ? "✅" : "❌"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
@@ -1768,7 +1769,7 @@ function AdminDashboard() {
                     React.createElement("div", { style: { marginBottom: "8px" } },
                         React.createElement("label", null, "Image actuelle : "),
                         editingActu.image_url ? 
-                            React.createElement("img", { src: editingActu.image_url, style: { width: "60px", height: "60px", borderRadius: "8px", marginLeft: "10px" } }) :
+                            React.createElement("img", { src: `${MEDIA_BASE}/${editingActu.image_url}`, style: { width: "60px", height: "60px", borderRadius: "8px", objectFit: "cover", marginLeft: "10px" } }) :
                             React.createElement("span", null, "Aucune image")
                     ),
                     React.createElement("input", { type: "file", name: "imageFile", accept: "image/*", onChange: (e) => {
@@ -1861,7 +1862,7 @@ function AdminDashboard() {
                         React.createElement("tr", { key: photo.id },
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, photo.id),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(photo.titre)),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("img", { src: photo.image_url, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" } })),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("img", { src: `${MEDIA_BASE}/${photo.image_url}`, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" } })),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, photo.active ? "Oui" : "Non"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
                                 React.createElement("button", { onClick: () => { setEditingEtablissement(photo); setEditEtabPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
@@ -1882,7 +1883,7 @@ function AdminDashboard() {
                     React.createElement("textarea", { name: "description", defaultValue: editingEtablissement.description || "", placeholder: "Description", rows: "2", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("div", { style: { marginBottom: "8px" } },
                         React.createElement("label", null, "Image actuelle : "),
-                        React.createElement("img", { src: editingEtablissement.image_url, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", marginLeft: "10px" } })
+                        React.createElement("img", { src: `${MEDIA_BASE}/${editingEtablissement.image_url}`, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", marginLeft: "10px" } })
                     ),
                     React.createElement("input", { type: "file", name: "imageFile", accept: "image/*", onChange: (e) => {
                         if (e.target.files && e.target.files[0]) {
@@ -1945,7 +1946,7 @@ function AdminDashboard() {
                         React.createElement("tr", { key: p.id },
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.id),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(p.nom)),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("img", { src: p.image_url, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" } })),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("img", { src: `${MEDIA_BASE}/${p.image_url}`, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" } })),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(p.commentaire || "-")),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.active ? "Oui" : "Non"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
@@ -1967,7 +1968,7 @@ function AdminDashboard() {
                     React.createElement("textarea", { name: "description", defaultValue: editingPartenaire.description || "", placeholder: "Description", rows: "2", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("div", { style: { marginBottom: "8px" } },
                         React.createElement("label", null, "Logo actuel : "),
-                        React.createElement("img", { src: editingPartenaire.image_url, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", marginLeft: "10px" } })
+                        React.createElement("img", { src: `${MEDIA_BASE}/${editingPartenaire.image_url}`, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", marginLeft: "10px" } })
                     ),
                     React.createElement("input", { type: "file", name: "imageFile", accept: "image/*", onChange: (e) => {
                         if (e.target.files && e.target.files[0]) {
@@ -2304,10 +2305,9 @@ function AdminDashboard() {
             )
         ),
 
-        // ===== NOUVEL ONGLET : SALLES DE RÉUNION =====
+        // ===== SALLES DE RÉUNION =====
         activeTab === "rooms" && React.createElement("div", null,
             React.createElement("h2", null, "🏢 Salles de réunion"),
-            // Formulaire d'ajout/modification
             React.createElement("form", { onSubmit: editingRoom ? updateRoom : createRoom, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("h4", null, editingRoom ? "Modifier la salle" : "➕ Ajouter une salle"),
                 React.createElement("input", { type: "text", placeholder: "Nom", value: roomForm.name, onChange: e => setRoomForm({...roomForm, name: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2322,7 +2322,6 @@ function AdminDashboard() {
                 editingRoom && React.createElement("button", { type: "button", onClick: () => { setEditingRoom(null); setRoomForm({ name: '', capacity: '', equipment: '', has_video: false }); }, style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Annuler"),
                 roomsFeedback && React.createElement("div", { style: { marginTop: "10px", color: roomsFeedback.includes("✅") ? "green" : "red" } }, roomsFeedback)
             ),
-            // Liste des salles
             React.createElement("h3", null, "Liste des salles"),
             React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" } },
                 rooms.map(room =>
@@ -2338,7 +2337,6 @@ function AdminDashboard() {
                     )
                 )
             ),
-            // Toutes les réservations
             React.createElement("h3", null, "📅 Réservations de toutes les salles"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
@@ -2366,10 +2364,9 @@ function AdminDashboard() {
             )
         ),
 
-        // ===== NOUVEL ONGLET : PERSONNEL HOSPITALIER =====
+        // ===== PERSONNEL HOSPITALIER =====
         activeTab === "staff" && React.createElement("div", null,
             React.createElement("h2", null, "👥 Personnel hospitalier"),
-            // Formulaire d'ajout/modification
             React.createElement("form", { onSubmit: editingStaff ? updateStaff : createStaff, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("h4", null, editingStaff ? "Modifier un compte" : "➕ Ajouter un compte"),
                 React.createElement("input", { type: "text", placeholder: "Nom complet", value: staffForm.name, onChange: e => setStaffForm({...staffForm, name: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2383,7 +2380,6 @@ function AdminDashboard() {
                 editingStaff && React.createElement("button", { type: "button", onClick: () => { setEditingStaff(null); setStaffForm({ name: '', email: '', password: '', role: 'staff' }); }, style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Annuler"),
                 staffFeedback && React.createElement("div", { style: { marginTop: "10px", color: staffFeedback.includes("✅") ? "green" : "red" } }, staffFeedback)
             ),
-            // Liste du personnel
             React.createElement("h3", null, "Liste du personnel"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
@@ -2412,7 +2408,7 @@ function AdminDashboard() {
             )
         ),
 
-        // ===== NOUVEL ONGLET : INFOS PATIENTS =====
+        // ===== INFOS PATIENTS =====
         activeTab === "infos-patients" && React.createElement("div", null,
             React.createElement("h2", null, "📋 Informations patients & visiteurs"),
             React.createElement("p", { style: { color: "#6c757d" } }, "Modifiez les informations affichées sur la page 'Infos patients'."),
