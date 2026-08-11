@@ -19,20 +19,47 @@ walk('./frontend/src', (filePath) => {
   let content = fs.readFileSync(filePath, 'utf8');
   let modified = false;
 
-  // Ajouter l'import si absent
-  if ((content.includes('image_url') || content.includes('photo_url')) && !content.includes('getImageUrl')) {
-    // Calculer le chemin relatif vers utils/media.js
+  // Liste des noms de variables d'images à rechercher
+  const imageVars = ['image_url', 'photo_url', 'photo', 'image'];
+
+  // Ajouter l'import si le fichier contient une de ces variables et que getImageUrl n'est pas déjà importé
+  const hasImageVar = imageVars.some(v => content.includes(v));
+  if (hasImageVar && !content.includes('getImageUrl')) {
     const relativePath = path.relative(path.dirname(filePath), './frontend/src/utils/media').replace(/\\/g, '/');
     content = `import { getImageUrl } from '${relativePath}';\n${content}`;
     modified = true;
   }
 
-  // Remplacer src={image_url} par src={getImageUrl(image_url)}
-  content = content.replace(/src=\{([^}]*?(?:image_url|photo_url)[^}]*?)\}/g, 'src={getImageUrl($1)}');
-  // Remplacer ${MEDIA_BASE}/... par getImageUrl
-  content = content.replace(/src=\{`\$\{MEDIA_BASE\}\/([^`]+)`\}/g, 'src={getImageUrl("$1")}');
+  // Remplacer toutes les formes de src={...} contenant une variable d'image
+  // 1. src={photo_url} → src={getImageUrl(photo_url)}
+  // 2. src={image_url} → src={getImageUrl(image_url)}
+  // 3. src={photo} → src={getImageUrl(photo)}
+  // 4. src={image} → src={getImageUrl(image)}
+  // 5. src={"uploads/..."} → src={getImageUrl("uploads/...")}
+  // 6. src={`${MEDIA_BASE}/...`} → src={getImageUrl(...)}
+  
+  // Pattern général : src={ suivi de n'importe quel contenu jusqu'à } 
+  // mais on veut capturer les cas où il y a une variable d'image ou une chaîne "uploads/"
+  const patterns = [
+    // src={photo_url} ou src={image_url} ou src={photo} ou src={image}
+    { regex: /src=\{([^}]*?(?:photo_url|image_url|photo|image)[^}]*?)\}/g, replace: 'src={getImageUrl($1)}' },
+    // src={"uploads/..."}
+    { regex: /src=\{("uploads\/[^"]+")\}/g, replace: 'src={getImageUrl($1)}' },
+    // src={`${MEDIA_BASE}/...`}
+    { regex: /src=\{`\$\{MEDIA_BASE\}\/([^`]+)`\}/g, replace: 'src={getImageUrl("$1")}' },
+    // src={'uploads/...'}
+    { regex: /src=\{('uploads\/[^']+')\}/g, replace: 'src={getImageUrl($1)}' },
+  ];
 
-  if (modified || content !== fs.readFileSync(filePath, 'utf8')) {
+  for (const { regex, replace } of patterns) {
+    const newContent = content.replace(regex, replace);
+    if (newContent !== content) {
+      content = newContent;
+      modified = true;
+    }
+  }
+
+  if (modified) {
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`✅ Modifié: ${filePath}`);
   }

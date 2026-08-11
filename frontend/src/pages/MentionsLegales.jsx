@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/media';
 // src/pages/MentionsLegales.jsx
 function MentionsLegales() {
   return (
