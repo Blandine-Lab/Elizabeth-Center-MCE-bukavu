@@ -8,22 +8,8 @@ const pool = require('./config/db');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// ========== CONFIGURATION CORS ==========
-const corsOptions = {
-  origin: [
-    'https://medical-center-elizabeth.netlify.app',
-    'https://www.medicalcenterelizabeth.org',
-    'http://localhost:3000',
-    'http://localhost:8080'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
-
 // Middlewares
+app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
