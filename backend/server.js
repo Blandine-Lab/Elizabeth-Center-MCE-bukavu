@@ -110,15 +110,14 @@ app.get('/api/public-jobs', async (req, res) => {
 });
 
 // ========== SERVIR LE FRONTEND EN PRODUCTION ==========
-if (process.env.NODE_ENV === 'production') {
-  const frontendBuildPath = path.join(__dirname, '../frontend/build');
-  app.use(express.static(frontendBuildPath));
-
-  // ✅ Correction pour Express 5 – wildcard nommé (sans accolades)
-  app.get('/*splat', (req, res) => {
-    res.sendFile(path.join(frontendBuildPath, 'index.html'));
-  });
-}
+// 🚨 Commenté car le frontend est déployé sur Netlify, pas sur Fly.io
+// if (process.env.NODE_ENV === 'production') {
+//   const frontendBuildPath = path.join(__dirname, '../frontend/build');
+//   app.use(express.static(frontendBuildPath));
+//   app.get('/*splat', (req, res) => {
+//     res.sendFile(path.join(frontendBuildPath, 'index.html'));
+//   });
+// }
 
 // Middleware d'erreur (à garder à la fin)
 app.use((err, req, res, next) => {
