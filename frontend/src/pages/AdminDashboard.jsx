@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/media';
 /* eslint-disable */
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";

@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/media';
 // src/pages/TrouverProfessionnel.jsx
 import { useState, useEffect } from 'react';
 
@@ -239,7 +240,7 @@ function TrouverProfessionnel() {
                   overflow: 'hidden'
                 }}>
                   {doctor.photo_url ? (
-                    <img src={doctor.photo_url} alt={doctor.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={getImageUrl(doctor.photo_url)} alt={doctor.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <i className="fas fa-user-md" style={{ fontSize: '3rem', color: '#0b6e8f' }}></i>
                   )}

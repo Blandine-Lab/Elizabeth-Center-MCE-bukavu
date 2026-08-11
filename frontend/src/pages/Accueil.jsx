@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/media';
 // src/pages/Accueil.jsx
 import { useState, useEffect } from 'react';
 import FloatingChat from '../components/FloatingChat';
