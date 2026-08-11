@@ -11,7 +11,15 @@ const PORT = process.env.PORT || 8080;
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+
+// ========== SERVIR LES UPLOADS AVEC EN‑TÊTES CORS ==========
+// Cette configuration évite le blocage ERR_BLOCKED_BY_ORB
+app.use('/uploads', (req, res, next) => {
+  // Autoriser le chargement cross-origin
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static('uploads'));
 
 // ========== ROUTE DE VÉRIFICATION ADMIN ==========
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '@@Mpombo21262578@@@@19';
