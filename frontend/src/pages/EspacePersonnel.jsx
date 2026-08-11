@@ -37,7 +37,13 @@ function EspacePersonnel() {
   const [replyText, setReplyText] = useState('');
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [doctors, setDoctors] = useState([]);
-  const [newMessage, setNewMessage] = useState({ doctor_id: '', subject: '', content: '' });
+  // 👇 État modifié pour accepter tout type de destinataire
+  const [newMessage, setNewMessage] = useState({
+    receiver_id: '',
+    receiver_type: 'doctor', // 'doctor' ou 'staff'
+    subject: '',
+    content: ''
+  });
   const [newMessageFeedback, setNewMessageFeedback] = useState('');
 
   // États pour les invités (multi-select)
@@ -301,14 +307,24 @@ function EspacePersonnel() {
     }
   };
 
-  // Envoyer un nouveau message à un médecin
+  // 👇 Envoyer un nouveau message (à un médecin OU à un membre du personnel)
   const sendNewMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.doctor_id || !newMessage.content) {
-      setNewMessageFeedback('Veuillez choisir un médecin et écrire un message.');
+    if (!newMessage.receiver_id || !newMessage.content) {
+      setNewMessageFeedback('Veuillez choisir un destinataire et écrire un message.');
       return;
     }
-    const selectedDoctor = doctors.find(d => d.id === parseInt(newMessage.doctor_id));
+
+    // Récupérer le nom du destinataire (pour l'affichage)
+    let receiverName = 'Destinataire';
+    if (newMessage.receiver_type === 'doctor') {
+      const doc = doctors.find(d => d.id === parseInt(newMessage.receiver_id));
+      if (doc) receiverName = doc.full_name;
+    } else if (newMessage.receiver_type === 'staff') {
+      const s = staffList.find(s => s.id === parseInt(newMessage.receiver_id));
+      if (s) receiverName = s.name;
+    }
+
     setNewMessageFeedback('Envoi...');
     try {
       const res = await fetch(`${API_BASE}/messages`, {
@@ -321,10 +337,10 @@ function EspacePersonnel() {
           sender_type: 'staff',
           sender_id: staff.id,
           sender_name: staff.name,
-          receiver_type: 'doctor',
-          receiver_id: parseInt(newMessage.doctor_id),
-          receiver_name: selectedDoctor ? selectedDoctor.full_name : 'Médecin',
-          subject: newMessage.subject || 'Demande du personnel',
+          receiver_type: newMessage.receiver_type,
+          receiver_id: parseInt(newMessage.receiver_id),
+          receiver_name: receiverName,
+          subject: newMessage.subject || 'Message du personnel',
           message: newMessage.content,
           attachment_url: null,
         }),
@@ -334,7 +350,7 @@ function EspacePersonnel() {
         throw new Error(errorData.error || `Erreur HTTP ${res.status}`);
       }
       setNewMessageFeedback('✅ Message envoyé');
-      setNewMessage({ doctor_id: '', subject: '', content: '' });
+      setNewMessage({ receiver_id: '', receiver_type: 'doctor', subject: '', content: '' });
       fetchMessages();
     } catch (err) {
       setNewMessageFeedback(`❌ ${err.message}`);
@@ -857,26 +873,46 @@ function EspacePersonnel() {
             <div>
               <h3 style={{ color: '#0b6e8f' }}>📬 Messagerie</h3>
 
-              {/* Formulaire d'envoi de nouveau message */}
+              {/* Formulaire d'envoi de nouveau message - modifié pour accepter médecins et personnel */}
               <div style={{ background: '#f1f9fe', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }}>
-                <h4>✉️ Envoyer un message à un médecin</h4>
+                <h4>✉️ Envoyer un message</h4>
                 <form onSubmit={sendNewMessage}>
                   <div style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', color: '#1e2a3a' }}>
-                      Médecin destinataire *
+                      Destinataire *
                     </label>
                     <select
-                      value={newMessage.doctor_id}
-                      onChange={(e) => setNewMessage({ ...newMessage, doctor_id: e.target.value })}
+                      value={newMessage.receiver_id}
+                      onChange={(e) => {
+                        const selectedId = parseInt(e.target.value);
+                        // Déterminer le type en parcourant les listes (on cherche dans doctors puis staffList)
+                        let foundType = '';
+                        if (doctors.some(d => d.id === selectedId)) foundType = 'doctor';
+                        else if (staffList.some(s => s.id === selectedId)) foundType = 'staff';
+                        setNewMessage({
+                          ...newMessage,
+                          receiver_id: selectedId,
+                          receiver_type: foundType || 'doctor'
+                        });
+                      }}
                       required
                       style={{ width: '100%', padding: '0.5rem', borderRadius: '1rem', border: '1px solid #cbd5e0' }}
                     >
-                      <option value="">-- Choisir un médecin --</option>
-                      {doctors.map((doc) => (
-                        <option key={doc.id} value={doc.id}>
-                          Dr {doc.full_name} ({doc.specialty || doc.profession})
-                        </option>
-                      ))}
+                      <option value="">-- Choisir un destinataire --</option>
+                      <optgroup label="👨‍⚕️ Médecins">
+                        {doctors.map((doc) => (
+                          <option key={doc.id} value={doc.id}>
+                            Dr {doc.full_name} ({doc.specialty || doc.profession})
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="👥 Personnel">
+                        {staffList.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.role || 'staff'})
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
                   <div style={{ marginBottom: '1rem' }}>
