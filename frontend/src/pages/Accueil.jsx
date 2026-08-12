@@ -1,16 +1,15 @@
-import { getImageUrl } from '../utils/media';
 // src/pages/Accueil.jsx
 import { useState, useEffect } from 'react';
 import FloatingChat from '../components/FloatingChat';
 import Navbar from '../components/Navbar';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../utils/media';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-const MEDIA_BASE = process.env.REACT_APP_MEDIA_URL || '';
 
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+  return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]);
 }
 
 function Accueil() {
@@ -22,24 +21,19 @@ function Accueil() {
   const [partenaires, setPartenaires] = useState([]);
   const [specialties, setSpecialties] = useState([]);
   const [paymentConfig, setPaymentConfig] = useState({});
-  
   const [tarifsModalActive, setTarifsModalActive] = useState(false);
   const [paiementFactureModalActive, setPaiementFactureModalActive] = useState(false);
   const [tarifsContent, setTarifsContent] = useState('');
   const [paiementFactureContent, setPaiementFactureContent] = useState('');
-  
   const [formFeedback, setFormFeedback] = useState('');
   const [newsletterFeedback, setNewsletterFeedback] = useState('');
   const [paymentFeedback, setPaymentFeedback] = useState('');
-  
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  
   let adminClicks = 0;
   let adminTimer = null;
 
-  // ========== CHARGEMENT DES DONNÉES ==========
   async function loadDoctors() {
     try {
       const res = await fetch(`${API_BASE}/staff`);
@@ -48,19 +42,19 @@ function Accueil() {
       if (Array.isArray(staff)) setDoctors(staff);
     } catch (err) { console.error('Erreur médecins:', err); }
   }
-  
+
   async function loadActualites() {
     try {
       const res = await fetch(`${API_BASE}/actualites`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (Array.isArray(data)) {
-        const active = data.filter(a => a.active !== 0).sort((a,b) => (a.ordre||0) - (b.ordre||0));
+        const active = data.filter(a => a.active !== 0).sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
         setActualites(active);
       }
     } catch (err) { console.error('Erreur actualités:', err); }
   }
-  
+
   async function loadEvents() {
     try {
       const res = await fetch(`${API_BASE}/events`);
@@ -72,48 +66,44 @@ function Accueil() {
       }
     } catch (err) { console.error('Erreur événements:', err); }
   }
-  
+
   async function loadJobs() {
     try {
       const res = await fetch(`${API_BASE}/public-jobs`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setJobs(data);
-      } else {
-        console.warn('Réponse non-tableau', data);
-        setJobs([]);
-      }
+      if (Array.isArray(data)) setJobs(data);
+      else setJobs([]);
     } catch (err) {
       console.error('❌ Erreur chargement offres:', err);
       setJobs([]);
     }
   }
-  
+
   async function loadEtablissement() {
     try {
       const res = await fetch(`${API_BASE}/etablissement`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const photos = await res.json();
       if (Array.isArray(photos)) {
-        const activePhotos = photos.filter(p => p.active !== 0 && p.active !== false).sort((a,b) => a.ordre - b.ordre);
+        const activePhotos = photos.filter(p => p.active !== 0 && p.active !== false).sort((a, b) => a.ordre - b.ordre);
         setEtablissement(activePhotos);
       }
     } catch (err) { console.error('Erreur établissement:', err); }
   }
-  
+
   async function loadPartenaires() {
     try {
       const res = await fetch(`${API_BASE}/partenaires`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (Array.isArray(data)) {
-        const activePartenaires = data.filter(p => p.active === 1 || p.active === true).sort((a,b) => a.ordre - b.ordre);
+        const activePartenaires = data.filter(p => p.active === 1 || p.active === true).sort((a, b) => a.ordre - b.ordre);
         setPartenaires(activePartenaires);
       }
     } catch (err) { console.error('Erreur partenaires:', err); }
   }
-  
+
   async function loadSpecialties() {
     try {
       const res = await fetch(`${API_BASE}/specialties`);
@@ -125,7 +115,7 @@ function Accueil() {
       }
     } catch (err) { console.error('Erreur spécialités:', err); }
   }
-  
+
   async function loadPaymentConfig() {
     try {
       const res = await fetch(`${API_BASE}/paiement/config`);
@@ -134,14 +124,14 @@ function Accueil() {
       setPaymentConfig(config);
     } catch (err) { console.error('Erreur config paiement:', err); }
   }
-  
+
   async function loadTarifsContent() {
     try {
       const res = await fetch(`${API_BASE}/tarifs`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const tarifs = await res.json();
       if (Array.isArray(tarifs)) {
-        const actifs = tarifs.filter(t => t.active === 1).sort((a,b) => a.ordre - b.ordre);
+        const actifs = tarifs.filter(t => t.active === 1).sort((a, b) => a.ordre - b.ordre);
         if (actifs.length === 0) {
           setTarifsContent('<p>Aucun tarif disponible pour le moment.</p>');
           return;
@@ -169,24 +159,24 @@ function Accueil() {
       } else {
         setTarifsContent('<p>Erreur de chargement des tarifs.</p>');
       }
-    } catch(err) {
+    } catch (err) {
       console.error('Erreur tarifs:', err);
       setTarifsContent('<p>Erreur de chargement des tarifs.</p>');
     }
   }
-  
+
   async function loadPaiementFactureContent() {
     try {
       const res = await fetch(`${API_BASE}/site-content/paiement_facture`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setPaiementFactureContent(data.contenu || '<p>Pour payer votre facture, utilisez le formulaire ci-dessus ou contactez notre service financier.</p>');
-    } catch(err) {
+    } catch (err) {
       console.error('Erreur paiement facture:', err);
       setPaiementFactureContent('<p>Erreur de chargement.</p>');
     }
   }
-  
+
   async function loadSlots(doctorId, date) {
     if (!doctorId || !date) { setAvailableSlots([]); return; }
     try {
@@ -197,8 +187,7 @@ function Accueil() {
       else setAvailableSlots([]);
     } catch (err) { console.error('Erreur créneaux:', err); setAvailableSlots([]); }
   }
-  
-  // ========== GESTIONNAIRES DE FORMULAIRES ==========
+
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -229,7 +218,7 @@ function Accueil() {
       setFormFeedback('<span style="color:red;">❌ Erreur réseau. Veuillez réessayer.</span>');
     }
   };
-  
+
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     const email = e.target.querySelector('#newsEmail').value.trim();
@@ -252,13 +241,10 @@ function Accueil() {
       setNewsletterFeedback('<span style="color:red;">❌ Erreur réseau</span>');
     }
   };
-  
-  // ✅ NOUVEAU : Gestionnaire pour le paiement manuel avec upload de preuve
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
-    // Vérifications
     const montant = parseFloat(formData.get('montant'));
     if (isNaN(montant) || montant <= 0) {
       setPaymentFeedback('<span style="color:red;">Montant invalide</span>');
@@ -275,19 +261,13 @@ function Accueil() {
       setPaymentFeedback('<span style="color:red;">Veuillez joindre une preuve de paiement (facture/bordereau)</span>');
       return;
     }
-
     setPaymentFeedback('<span style="color:blue;">Envoi en cours...</span>');
-
     try {
-      const res = await fetch(`${API_BASE}/paiement/manual`, {
-        method: 'POST',
-        body: formData, // Ne pas définir Content-Type, le navigateur gère le multipart
-      });
+      const res = await fetch(`${API_BASE}/paiement/manual`, { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
         setPaymentFeedback(`<span style="color:green;">✅ ${data.message}</span>`);
         e.target.reset();
-        // Cacher le champ téléphone si affiché
         const telephoneGroup = document.getElementById('telephoneGroup');
         if (telephoneGroup) telephoneGroup.style.display = 'none';
       } else {
@@ -298,8 +278,7 @@ function Accueil() {
       setPaymentFeedback('<span style="color:red;">❌ Erreur réseau. Veuillez réessayer.</span>');
     }
   };
-  
-  // ========== EFFETS ==========
+
   useEffect(() => {
     loadDoctors();
     loadActualites();
@@ -309,7 +288,6 @@ function Accueil() {
     loadPartenaires();
     loadSpecialties();
     loadPaymentConfig();
-    
     const interval = setInterval(() => {
       loadDoctors();
       loadActualites();
@@ -319,17 +297,15 @@ function Accueil() {
       loadPartenaires();
       loadSpecialties();
     }, 30000);
-    
     return () => clearInterval(interval);
   }, []);
-  
+
   useEffect(() => {
     if (selectedDoctor && selectedDate) {
       loadSlots(selectedDoctor, selectedDate);
     }
   }, [selectedDoctor, selectedDate]);
-  
-  // Gestion de l'affichage du champ téléphone en fonction du mode de paiement
+
   useEffect(() => {
     const methodeSelect = document.getElementById('payMethode');
     const telephoneGroup = document.getElementById('telephoneGroup');
@@ -341,8 +317,7 @@ function Accueil() {
       return () => methodeSelect.removeEventListener('change', toggleTelephone);
     }
   }, []);
-  
-  // ========== RENDU JSX ==========
+
   return (
     <>
       {/* Top bar */}
@@ -369,7 +344,7 @@ function Accueil() {
       </div>
 
       <div className="announcement-bar">
-        <i className="fas fa-info-circle"></i> Prochaine fermeture technique : vous sera communiqué. Mais nous sommes ouverts.. 
+        <i className="fas fa-info-circle"></i> Prochaine fermeture technique : vous sera communiqué. Mais nous sommes ouverts..
         <a href="#" style={{ color: '#0b6e8f', textDecoration: 'underline' }}>Voir toutes les annonces</a>
       </div>
 
@@ -452,7 +427,9 @@ function Accueil() {
             ) : (
               doctors.filter(d => d.profession === 'Médecin').map(m => (
                 <div key={m.id} className="doctor-card" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)' }}>
-                  <div className="doc-img">{m.photo_url ? <img src={`${MEDIA_BASE}${m.photo_url}`} alt={m.full_name} /> : <i className="fas fa-user-md"></i>}</div>
+                  <div className="doc-img">
+                    {m.photo_url ? <img src={getImageUrl(m.photo_url)} alt={m.full_name} /> : <i className="fas fa-user-md"></i>}
+                  </div>
                   <h4>{escapeHtml(m.full_name)}</h4>
                   <p className="specialty">{escapeHtml(m.profession)}{m.specialty ? ' - ' + escapeHtml(m.specialty) : ''}</p>
                   <p>{escapeHtml(m.department || '')}</p>
@@ -501,7 +478,7 @@ function Accueil() {
                 {actualites.length === 0 ? <p>Chargement des actualités...</p> : actualites.map(a => (
                   <div key={a.id} className="news-item">
                     {a.image_url ? (
-                      <img src={`${MEDIA_BASE}${a.image_url}`} className="news-img" alt={a.titre} onError={(e) => { e.target.style.display = 'none'; }} />
+                      <img src={getImageUrl(a.image_url)} className="news-img" alt={a.titre} onError={(e) => { e.target.style.display = 'none'; }} />
                     ) : (
                       <div className="news-img"><i className="fas fa-newspaper"></i></div>
                     )}
@@ -533,7 +510,7 @@ function Accueil() {
           <div className="etablissement-grid">
             {etablissement.length === 0 ? <p>Chargement des photos...</p> : etablissement.map(p => (
               <div key={p.id} className="etablissement-card">
-                <img src={`${MEDIA_BASE}${p.image_url}`} alt={escapeHtml(p.titre)} />
+                <img src={getImageUrl(p.image_url)} alt={escapeHtml(p.titre)} />
                 <div className="content">
                   <h3>{escapeHtml(p.titre)}</h3>
                   <p>{escapeHtml(p.description || '')}</p>
@@ -553,7 +530,7 @@ function Accueil() {
             {partenaires.length === 0 ? <p>Chargement des partenaires...</p> : partenaires.map(p => (
               <div key={p.id} className="partenaire-card">
                 {p.image_url ? (
-                  <img src={`${MEDIA_BASE}${p.image_url}`} alt={escapeHtml(p.nom)} onError={(e) => { e.target.style.display = 'none'; }} />
+                  <img src={getImageUrl(p.image_url)} alt={escapeHtml(p.nom)} onError={(e) => { e.target.style.display = 'none'; }} />
                 ) : (
                   <div style={{ width: '100%', height: '100px', background: '#e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>
                     <i className="fas fa-building" style={{ fontSize: '2rem', color: '#adb5bd' }}></i>
@@ -608,7 +585,7 @@ function Accueil() {
         </div>
       </section>
 
-      {/* ========== SECTION PAIEMENT AVEC UPLOAD DE PREUVE ========== */}
+      {/* Paiement */}
       <section style={{ padding: '4rem 0', background: 'url(/uploads/payer.jpg) center/cover no-repeat', position: 'relative' }}>
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <h2 className="section-title">💳 Payer des soins hospitaliers</h2>
@@ -629,14 +606,12 @@ function Accueil() {
               </div>
             </div>
             <div className="payment-right">
-              {/* Coordonnées bancaires */}
               <div id="paymentConfig" style={{ marginBottom: '1rem', fontSize: '0.9rem', background: '#f0f7fc', borderRadius: '0.8rem', padding: '0.5rem' }}>
                 <p><strong>🏦 Coordonnées bancaires :</strong><br />{escapeHtml(paymentConfig.titulaire || '')}<br />IBAN: {escapeHtml(paymentConfig.iban || '')}<br />BIC: {escapeHtml(paymentConfig.bic || '')}</p>
                 <p><strong>📱 Mobile Money :</strong> {escapeHtml(paymentConfig.mobile_money_info || '')}</p>
                 <p><strong>💳 Carte :</strong> {escapeHtml(paymentConfig.carte_info || '')}</p>
               </div>
 
-              {/* Formulaire de paiement manuel avec upload */}
               <form id="paymentForm" onSubmit={handlePaymentSubmit} encType="multipart/form-data">
                 <div className="form-group">
                   <label>Nom complet *</label>
@@ -678,7 +653,7 @@ function Accueil() {
         </div>
       </section>
 
-      {/* ========== NOUS SOUTENIR – avec vidéo en arrière‑plan ========== */}
+      {/* Nous soutenir */}
       <section
         style={{
           position: 'relative',
@@ -688,7 +663,6 @@ function Accueil() {
         }}
         onClick={() => window.location.href = '/support'}
       >
-        {/* Vidéo en arrière‑plan */}
         <video
           autoPlay
           muted
@@ -707,7 +681,6 @@ function Accueil() {
           <source src="/videos/video11.mp4" type="video/mp4" />
         </video>
 
-        {/* Overlay sombre */}
         <div
           style={{
             position: 'absolute',
@@ -720,7 +693,6 @@ function Accueil() {
           }}
         ></div>
 
-        {/* Contenu */}
         <div
           className="container"
           style={{
@@ -754,7 +726,7 @@ function Accueil() {
           <div dangerouslySetInnerHTML={{ __html: tarifsContent }}></div>
         </div>
       </div>
-      
+
       <div className={`modal ${paiementFactureModalActive ? 'active' : ''}`} onClick={() => setPaiementFactureModalActive(false)}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <span className="close-modal" onClick={() => setPaiementFactureModalActive(false)}>&times;</span>
