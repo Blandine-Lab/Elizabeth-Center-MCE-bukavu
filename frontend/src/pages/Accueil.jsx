@@ -31,6 +31,8 @@ function Accueil() {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [jourOuverture, setJourOuverture] = useState([]);
+  const [lightboxMedia, setLightboxMedia] = useState(null);
   let adminClicks = 0;
   let adminTimer = null;
 
@@ -123,6 +125,22 @@ function Accueil() {
       const config = await res.json();
       setPaymentConfig(config);
     } catch (err) { console.error('Erreur config paiement:', err); }
+  }
+
+  async function loadJourOuverture() {
+    try {
+      const res = await fetch(`${API_BASE}/jour-ouverture`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const active = data
+          .filter(m => m.active === 1 || m.active === true || m.active === undefined)
+          .sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+        setJourOuverture(active);
+      }
+    } catch (err) {
+      console.error('Erreur jour ouverture:', err);
+    }
   }
 
   async function loadTarifsContent() {
@@ -288,6 +306,7 @@ function Accueil() {
     loadPartenaires();
     loadSpecialties();
     loadPaymentConfig();
+    loadJourOuverture();
     const interval = setInterval(() => {
       loadDoctors();
       loadActualites();
@@ -296,6 +315,7 @@ function Accueil() {
       loadEtablissement();
       loadPartenaires();
       loadSpecialties();
+      loadJourOuverture();
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -521,6 +541,133 @@ function Accueil() {
         </div>
       </section>
 
+      {/* Jour d'ouverture */}
+      <section
+        style={{
+          padding: '4rem 0',
+          background: 'linear-gradient(135deg, #0b6e8f 0%, #2ec4b6 100%)',
+          position: 'relative',
+        }}
+      >
+        <div className="container">
+          <h2 className="section-title" style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+            🎉 Le jour de notre ouverture
+          </h2>
+          <p className="section-sub" style={{ color: 'rgba(255,255,255,0.95)' }}>
+            Revivez les moments forts de l'inauguration du Medical Center Elizabeth
+          </p>
+
+          {jourOuverture.length === 0 ? (
+            <p style={{ color: 'white', textAlign: 'center' }}>Chargement des souvenirs...</p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: '1.2rem',
+                marginTop: '2rem',
+              }}
+            >
+              {jourOuverture.map((m, idx) => {
+                const isVideo = m.type === 'video' || m.media_type === 'video';
+                const url = isVideo ? (m.video_url || m.url) : (m.image_url || m.url);
+                if (!url) return null;
+                return (
+                  <div
+                    key={m.id || idx}
+                    onClick={() =>
+                      setLightboxMedia({
+                        type: isVideo ? 'video' : 'photo',
+                        url,
+                        titre: m.titre,
+                        description: m.description,
+                      })
+                    }
+                    style={{
+                      position: 'relative',
+                      borderRadius: '1rem',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+                      background: '#000',
+                      aspectRatio: '4 / 3',
+                      transition: 'transform 0.25s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    {isVideo ? (
+                      <video
+                        src={getImageUrl(url)}
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <img
+                        src={getImageUrl(url)}
+                        alt={escapeHtml(m.titre || '')}
+                        loading="lazy"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
+
+                    {(m.titre || m.description) && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          padding: '0.8rem 1rem',
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                          color: 'white',
+                        }}
+                      >
+                        {m.titre && (
+                          <h4 style={{ margin: 0, fontSize: '1rem' }}>{escapeHtml(m.titre)}</h4>
+                        )}
+                        {m.description && (
+                          <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
+                            {escapeHtml(m.description)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {isVideo && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.85)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#0b6e8f',
+                          fontSize: '1.4rem',
+                          pointerEvents: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        <i className="fas fa-play"></i>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Partenaires */}
       <section style={{ padding: '4rem 0' }}>
         <div className="container">
@@ -733,6 +880,78 @@ function Accueil() {
           <div dangerouslySetInnerHTML={{ __html: paiementFactureContent }}></div>
         </div>
       </div>
+
+      {/* Lightbox Jour d'ouverture */}
+      {lightboxMedia && (
+        <div
+          className="modal active"
+          onClick={() => setLightboxMedia(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <span
+              onClick={() => setLightboxMedia(null)}
+              style={{
+                position: 'absolute',
+                top: '-2.5rem',
+                right: 0,
+                color: 'white',
+                fontSize: '2rem',
+                cursor: 'pointer',
+                lineHeight: 1,
+              }}
+            >
+              &times;
+            </span>
+
+            {lightboxMedia.type === 'video' ? (
+              <video
+                src={getImageUrl(lightboxMedia.url)}
+                controls
+                autoPlay
+                style={{ width: '100%', maxHeight: '80vh', borderRadius: '1rem' }}
+              />
+            ) : (
+              <img
+                src={getImageUrl(lightboxMedia.url)}
+                alt={lightboxMedia.titre || ''}
+                style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '1rem' }}
+              />
+            )}
+
+            {lightboxMedia.titre && (
+              <h3 style={{ color: 'white', marginTop: '1rem', textAlign: 'center' }}>
+                {lightboxMedia.titre}
+              </h3>
+            )}
+            {lightboxMedia.description && (
+              <p style={{ color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginTop: '0.3rem' }}>
+                {lightboxMedia.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <FloatingChat />
     </>
