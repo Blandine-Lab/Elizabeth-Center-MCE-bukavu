@@ -48,6 +48,19 @@ function AdminDashboard() {
     const [editingStaff, setEditingStaff] = useState(null);
     const [staffFeedback, setStaffFeedback] = useState('');
 
+    // Nouveaux états pour le Jour d'ouverture
+    const [jourOuverture, setJourOuverture] = useState([]);
+    const [jourForm, setJourForm] = useState({
+        type: 'photo',
+        titre: '',
+        description: '',
+        ordre: 0,
+        active: true
+    });
+    const [editingJour, setEditingJour] = useState(null);
+    const [jourFeedback, setJourFeedback] = useState('');
+    const [jourPreview, setJourPreview] = useState(null);
+
     // État pour les informations patients
     const [infoPatientsContent, setInfoPatientsContent] = useState({
         horaires: '',
@@ -384,6 +397,19 @@ function AdminDashboard() {
         }
     };
 
+    // ========== JOUR D'OUVERTURE ==========
+    const loadJourOuverture = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/jour-ouverture`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setJourOuverture(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('loadJourOuverture:', err);
+            setJourOuverture([]);
+        }
+    };
+
     // ========== INFOS PATIENTS ==========
     const loadInfoPatients = async () => {
         setInfoPatientsLoading(true);
@@ -521,6 +547,111 @@ function AdminDashboard() {
             loadStaffList();
         } catch (err) {
             setStaffFeedback(`❌ ${err.message}`);
+        }
+    };
+
+    // ========== GESTION JOUR D'OUVERTURE ==========
+    const uploadMediaFile = async (file) => {
+        const fd = new FormData();
+        fd.append("image", file);
+        const uploadRes = await fetch(`${API_BASE}/upload`, { method: "POST", body: fd });
+        const uploadData = await uploadRes.json();
+        return uploadData.imageUrl || null;
+    };
+
+    const addJourOuverture = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const type = formData.get("type");
+        const titre = formData.get("titre");
+        const description = formData.get("description");
+        const ordre = parseInt(formData.get("ordre") || 0);
+        const active = formData.get("active") === "on" ? 1 : 0;
+        const fileField = type === 'video' ? 'videoFile' : 'imageFile';
+        const file = formData.get(fileField);
+
+        if (!file || file.size === 0) {
+            setJourFeedback('❌ Fichier requis');
+            return;
+        }
+
+        setJourFeedback('⏳ Upload en cours...');
+        try {
+            const url = await uploadMediaFile(file);
+            if (!url) { setJourFeedback('❌ Erreur upload'); return; }
+
+            const payload = { type, titre, description, url, ordre, active };
+            const res = await fetch(`${API_BASE}/jour-ouverture`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                setJourFeedback('✅ Média ajouté');
+                loadJourOuverture();
+                e.target.reset();
+                setJourPreview(null);
+                setJourForm({ type: 'photo', titre: '', description: '', ordre: 0, active: true });
+            } else {
+                setJourFeedback('❌ Erreur ajout');
+            }
+        } catch (err) {
+            console.error('addJourOuverture:', err);
+            setJourFeedback('❌ Erreur réseau');
+        }
+    };
+
+    const updateJourOuverture = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const type = formData.get("type");
+        const titre = formData.get("titre");
+        const description = formData.get("description");
+        const ordre = parseInt(formData.get("ordre") || 0);
+        const active = formData.get("active") === "on" ? 1 : 0;
+
+        let url = editingJour.url;
+        const fileField = type === 'video' ? 'videoFile' : 'imageFile';
+        const file = formData.get(fileField);
+
+        if (file && file.size > 0) {
+            setJourFeedback('⏳ Upload en cours...');
+            const newUrl = await uploadMediaFile(file);
+            if (!newUrl) { setJourFeedback('❌ Erreur upload'); return; }
+            url = newUrl;
+        }
+
+        const payload = { type, titre, description, url, ordre, active };
+        try {
+            const res = await fetch(`${API_BASE}/jour-ouverture/${editingJour.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                setJourFeedback('✅ Média mis à jour');
+                loadJourOuverture();
+                setEditingJour(null);
+                setJourPreview(null);
+            } else {
+                setJourFeedback('❌ Erreur mise à jour');
+            }
+        } catch (err) {
+            console.error('updateJourOuverture:', err);
+            setJourFeedback('❌ Erreur réseau');
+        }
+    };
+
+    const deleteJourOuverture = async (id) => {
+        if (!window.confirm("Supprimer ce média ?")) return;
+        try {
+            const res = await fetch(`${API_BASE}/jour-ouverture/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                showSuccess("Média supprimé");
+                loadJourOuverture();
+            }
+        } catch (err) {
+            console.error('deleteJourOuverture:', err);
         }
     };
     
@@ -1242,7 +1373,8 @@ function AdminDashboard() {
         { id: "messages", label: "📩 Messages" },
         { id: "rooms", label: "🏢 Salles de réunion" },
         { id: "staff", label: "👥 Personnel hospitalier" },
-        { id: "infos-patients", label: "📋 Infos patients" }
+        { id: "infos-patients", label: "📋 Infos patients" },
+        { id: "jour-ouverture", label: "🎉 Jour d'ouverture" }
     ];
     
     // ========== CHARGEMENT INITIAL ==========
@@ -1272,6 +1404,7 @@ function AdminDashboard() {
         loadAllBookings();
         loadStaffList();
         loadInfoPatients();
+        loadJourOuverture();
     }, []);
     
     // ========== RECHARGEMENT AU CHANGEMENT D'ONGLET ==========
@@ -1298,6 +1431,7 @@ function AdminDashboard() {
         if (activeTab === "rooms") { loadRooms(); loadAllBookings(); }
         if (activeTab === "staff") loadStaffList();
         if (activeTab === "infos-patients") loadInfoPatients();
+        if (activeTab === "jour-ouverture") loadJourOuverture();
     }, [activeTab]);
     
     // ========== RENDU JSX ==========
@@ -2462,6 +2596,180 @@ function AdminDashboard() {
                 React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "10px 20px", borderRadius: "25px", cursor: "pointer", alignSelf: "flex-start" } }, "💾 Enregistrer")
             ),
             infoPatientsLoading && React.createElement("p", null, "Chargement...")
+        ),
+
+        // ===== JOUR D'OUVERTURE =====
+        activeTab === "jour-ouverture" && React.createElement("div", null,
+            React.createElement("h2", null, "🎉 Jour d'ouverture de l'hôpital"),
+            React.createElement("p", { style: { color: "#6c757d" } },
+                "Ajoutez des photos et vidéos de l'inauguration du MCE. Ils s'afficheront automatiquement sur la page d'accueil."
+            ),
+
+            // FORMULAIRE
+            React.createElement("form", {
+                onSubmit: editingJour ? updateJourOuverture : addJourOuverture,
+                style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" }
+            },
+                React.createElement("h4", null, editingJour ? "✏️ Modifier le média" : "➕ Ajouter un média"),
+
+                React.createElement("label", { style: { fontWeight: "bold" } }, "Type de média :"),
+                React.createElement("select", {
+                    name: "type",
+                    value: jourForm.type,
+                    onChange: e => setJourForm({ ...jourForm, type: e.target.value }),
+                    style: { width: "100%", marginBottom: "8px", padding: "8px" }
+                },
+                    React.createElement("option", { value: "photo" }, "📷 Photo"),
+                    React.createElement("option", { value: "video" }, "🎥 Vidéo")
+                ),
+
+                React.createElement("input", {
+                    type: "text", name: "titre", placeholder: "Titre",
+                    defaultValue: editingJour ? editingJour.titre : "",
+                    style: { width: "100%", marginBottom: "8px", padding: "8px" }
+                }),
+
+                React.createElement("textarea", {
+                    name: "description", placeholder: "Description", rows: "2",
+                    defaultValue: editingJour ? editingJour.description : "",
+                    style: { width: "100%", marginBottom: "8px", padding: "8px" }
+                }),
+
+                React.createElement("input", {
+                    type: "number", name: "ordre", placeholder: "Ordre d'affichage",
+                    defaultValue: editingJour ? editingJour.ordre : 0,
+                    style: { width: "100%", marginBottom: "8px", padding: "8px" }
+                }),
+
+                editingJour && React.createElement("div", { style: { marginBottom: "8px" } },
+                    React.createElement("label", null, "Média actuel : "),
+                    editingJour.type === 'video'
+                        ? React.createElement("video", {
+                            src: `${MEDIA_BASE}/${editingJour.url}`,
+                            style: { width: "120px", borderRadius: "8px", marginLeft: "10px", verticalAlign: "middle" },
+                            muted: true
+                        })
+                        : React.createElement("img", {
+                            src: `${MEDIA_BASE}/${editingJour.url}`,
+                            style: { width: "80px", height: "60px", objectFit: "cover", borderRadius: "8px", marginLeft: "10px", verticalAlign: "middle" }
+                        })
+                ),
+
+                React.createElement("input", {
+                    type: "file",
+                    name: jourForm.type === 'video' ? 'videoFile' : 'imageFile',
+                    accept: jourForm.type === 'video' ? 'video/*' : 'image/*',
+                    onChange: e => {
+                        if (e.target.files && e.target.files[0]) {
+                            const reader = new FileReader();
+                            reader.onload = ev => setJourPreview({ url: ev.target.result, type: jourForm.type });
+                            reader.readAsDataURL(e.target.files[0]);
+                        }
+                    },
+                    style: { width: "100%", marginBottom: "8px", padding: "8px" }
+                }),
+
+                jourPreview && React.createElement("div", { style: { marginBottom: "8px" } },
+                    jourPreview.type === 'video'
+                        ? React.createElement("video", { src: jourPreview.url, style: { width: "160px", borderRadius: "8px" }, muted: true, controls: true })
+                        : React.createElement("img", { src: jourPreview.url, style: { width: "120px", borderRadius: "8px" }, alt: "Aperçu" })
+                ),
+
+                React.createElement("label", null,
+                    React.createElement("input", { type: "checkbox", name: "active", defaultChecked: true }),
+                    " Actif (visible sur l'accueil)"
+                ),
+                React.createElement("br", null),
+
+                React.createElement("button", {
+                    type: "submit",
+                    style: { marginTop: "10px", background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" }
+                }, editingJour ? "Mettre à jour" : "Ajouter"),
+
+                editingJour && React.createElement("button", {
+                    type: "button",
+                    onClick: () => {
+                        setEditingJour(null);
+                        setJourPreview(null);
+                        setJourForm({ type: 'photo', titre: '', description: '', ordre: 0, active: true });
+                    },
+                    style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" }
+                }, "Annuler"),
+
+                jourFeedback && React.createElement("div", {
+                    style: { marginTop: "10px", color: jourFeedback.includes("✅") ? "green" : jourFeedback.includes("⏳") ? "#0b6e8f" : "red" }
+                }, jourFeedback)
+            ),
+
+            // LISTE DES MÉDIAS
+            React.createElement("h3", null, "📸 Médias enregistrés"),
+            jourOuverture.length === 0
+                ? React.createElement("p", null, "Aucun média pour le moment.")
+                : React.createElement("div", {
+                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "15px" }
+                },
+                    jourOuverture.map(m => {
+                        const isVideo = m.type === 'video';
+                        return React.createElement("div", {
+                            key: m.id,
+                            style: {
+                                border: "1px solid #ddd",
+                                borderRadius: "12px",
+                                overflow: "hidden",
+                                background: "white",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                            }
+                        },
+                            isVideo
+                                ? React.createElement("video", {
+                                    src: `${MEDIA_BASE}/${m.url}`,
+                                    style: { width: "100%", height: "150px", objectFit: "cover", background: "#000" },
+                                    muted: true,
+                                    controls: true
+                                })
+                                : React.createElement("img", {
+                                    src: `${MEDIA_BASE}/${m.url}`,
+                                    style: { width: "100%", height: "150px", objectFit: "cover" },
+                                    alt: m.titre
+                                }),
+
+                            React.createElement("div", { style: { padding: "10px" } },
+                                React.createElement("h4", { style: { margin: "0 0 5px 0" } },
+                                    isVideo ? "🎥 " : "📷 ",
+                                    escapeHtml(m.titre || "Sans titre")
+                                ),
+                                React.createElement("p", { style: { fontSize: "0.85rem", color: "#666", margin: "0 0 5px 0" } },
+                                    escapeHtml(m.description || "")
+                                ),
+                                React.createElement("p", { style: { fontSize: "0.8rem", color: "#999", margin: 0 } },
+                                    "Ordre : ", m.ordre, " · ",
+                                    (m.active === 1 || m.active === true) ? "✅ Actif" : "❌ Inactif"
+                                ),
+
+                                React.createElement("div", { style: { marginTop: "8px", display: "flex", gap: "8px" } },
+                                    React.createElement("button", {
+                                        onClick: () => {
+                                            setEditingJour(m);
+                                            setJourForm({
+                                                type: m.type || 'photo',
+                                                titre: m.titre || '',
+                                                description: m.description || '',
+                                                ordre: m.ordre || 0,
+                                                active: m.active === 1 || m.active === true
+                                            });
+                                            setJourPreview(null);
+                                        },
+                                        style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }
+                                    }, "✏️"),
+                                    React.createElement("button", {
+                                        onClick: () => deleteJourOuverture(m.id),
+                                        style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }
+                                    }, "🗑️")
+                                )
+                            )
+                        );
+                    })
+                )
         ),
         
         React.createElement("div", { className: "footer", style: { marginTop: "20px", textAlign: "center", color: "#6c757d" } }, React.createElement("p", null, "🔒 Accès sécurisé réservé au personnel autorisé"))
