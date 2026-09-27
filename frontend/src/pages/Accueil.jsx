@@ -442,10 +442,10 @@ function Accueil() {
           <h2 className="section-title" style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Corps médical d'excellence MCE</h2>
           <p className="section-sub" style={{ color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>Des leaders internationaux formés aux technologies de rupture.</p>
           <div className="doctors-grid">
-            {doctors.filter(d => d.profession === 'Médecin').length === 0 ? (
-              <p style={{ color: 'white', textAlign: 'center' }}>Chargement des médecins...</p>
-            ) : (
-              doctors.filter(d => d.profession === 'Médecin').map(m => (
+             {doctors.filter(d => d.profession && d.profession.toLowerCase().includes('decin')).length === 0 ? (
+  <p style={{ color: 'white', textAlign: 'center' }}>Chargement des médecins...</p>
+) : (
+  doctors.filter(d => d.profession && d.profession.toLowerCase().includes('decin')).map(m => (
                 <div key={m.id} className="doctor-card" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)' }}>
                   <div className="doc-img">
                     {m.photo_url ? <img src={getImageUrl(m.photo_url)} alt={m.full_name} /> : <i className="fas fa-user-md"></i>}
@@ -711,9 +711,9 @@ function Accueil() {
                   <label>Médecin</label>
                   <select name="doctorId" required onChange={(e) => setSelectedDoctor(e.target.value)}>
                     <option value="">Sélectionnez un médecin</option>
-                    {doctors.filter(m => m.profession === 'Médecin').map(d => (
-                      <option key={d.id} value={d.id}>{d.full_name} ({d.specialty || d.profession})</option>
-                    ))}
+                    {doctors.filter(m => m.profession && m.profession.toLowerCase().includes('decin')).map(d => (
+  <option key={d.id} value={d.id}>{d.full_name} ({d.specialty || d.profession})</option>
+))}
                   </select>
                 </div>
                 <div className="form-group"><label>Date</label><input type="date" name="date" required onChange={(e) => setSelectedDate(e.target.value)} /></div>
