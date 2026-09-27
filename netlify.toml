@@ -5,7 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "20.18.0"
-  REACT_APP_API_URL = "https://backend-satin-leaf-4920.fly.dev/api"
+  REACT_APP_API_URL = "https://elizabeth-center-mce-bukavu-fdzz.onrender.com/api"
 
 # Redirection pour le routage SPA (Single Page Application)
 # Toutes les requêtes non trouvées renvoient index.html (React Router)
@@ -14,9 +14,9 @@
   to = "/index.html"
   status = 200
 
-# Redirection pour les fichiers uploadés vers le backend
-# Toute requête vers /uploads/* est proxifiée vers le backend Fly.io
+# Redirection pour les fichiers uploadés vers le backend Render
+# Toute requête vers /uploads/* est proxifiée vers le backend Render
 [[redirects]]
   from = "/uploads/*"
-  to = "https://backend-satin-leaf-4920.fly.dev/uploads/:splat"
+  to = "https://elizabeth-center-mce-bukavu-fdzz.onrender.com/uploads/:splat"
   status = 200
