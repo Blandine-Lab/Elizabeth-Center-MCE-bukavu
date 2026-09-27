@@ -81,6 +81,9 @@ app.use('/api/admin/staff', require('./routes/admin/staff'));
 // ========== ROUTE UPLOAD ==========
 app.use('/api/upload', require('./routes/upload'));
 
+// ========== ROUTE JOUR D'OUVERTURE ==========
+app.use('/api/jour-ouverture', require('./routes/jour-ouverture'));
+
 // ========== ROUTES ADMIN ==========
 app.use('/api', require('./routes/admin/dashboard'));
 app.use('/api/admin/patients', require('./routes/admin/patients'));
@@ -137,5 +140,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
   console.log(`📊 Test DB : http://localhost:${PORT}/api/test-db`);
-  console.log(`📋 Routes disponibles : /api/staff, /api/actualites, /api/events, /api/etablissement, /api/partenaires, /api/tarifs, /api/site-content, /api/specialties, /api/appointments, /api/paiement, /api/newsletter, /api/availability, /api/upload, /api/availabilities, /api/admin/applications, /api/admin/appointments, /api/messages, /api/patient, /api/doctor, /api/public-jobs, /api/applications`);
+  console.log(`📋 Routes disponibles : /api/staff, /api/actualites, /api/events, /api/etablissement, /api/partenaires, /api/tarifs, /api/site-content, /api/specialties, /api/appointments, /api/paiement, /api/newsletter, /api/availability, /api/upload, /api/jour-ouverture, /api/availabilities, /api/admin/applications, /api/admin/appointments, /api/messages, /api/patient, /api/doctor, /api/public-jobs, /api/applications`);
 });

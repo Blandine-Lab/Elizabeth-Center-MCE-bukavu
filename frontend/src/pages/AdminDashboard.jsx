@@ -1,4 +1,4 @@
-import { getImageUrl } from '../utils/media';
+﻿import { getImageUrl } from '../utils/media';
 /* eslint-disable */
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
@@ -11,7 +11,7 @@ function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("rdv");
     const [selectedPage, setSelectedPage] = useState("home");
     
-    // États pour les données (existants)
+    // Ã‰tats pour les donnÃ©es (existants)
     const [appointments, setAppointments] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [events, setEvents] = useState([]);
@@ -35,20 +35,20 @@ function AdminDashboard() {
     const [paiementsManuels, setPaiementsManuels] = useState([]);
     const [messages, setMessages] = useState([]);
 
-    // Nouveaux états pour les salles de réunion (admin)
+    // Nouveaux Ã©tats pour les salles de rÃ©union (admin)
     const [rooms, setRooms] = useState([]);
     const [allBookings, setAllBookings] = useState([]);
     const [roomForm, setRoomForm] = useState({ name: '', capacity: '', equipment: '', has_video: false });
     const [editingRoom, setEditingRoom] = useState(null);
     const [roomsFeedback, setRoomsFeedback] = useState('');
 
-    // Nouveaux états pour le personnel hospitalier
+    // Nouveaux Ã©tats pour le personnel hospitalier
     const [staffList, setStaffList] = useState([]);
     const [staffForm, setStaffForm] = useState({ name: '', email: '', password: '', role: 'staff' });
     const [editingStaff, setEditingStaff] = useState(null);
     const [staffFeedback, setStaffFeedback] = useState('');
 
-    // Nouveaux états pour le Jour d'ouverture
+    // â­ Nouveaux Ã©tats pour le Jour d'ouverture
     const [jourOuverture, setJourOuverture] = useState([]);
     const [jourForm, setJourForm] = useState({
         type: 'photo',
@@ -61,7 +61,7 @@ function AdminDashboard() {
     const [jourFeedback, setJourFeedback] = useState('');
     const [jourPreview, setJourPreview] = useState(null);
 
-    // État pour les informations patients
+    // Ã‰tat pour les informations patients
     const [infoPatientsContent, setInfoPatientsContent] = useState({
         horaires: '',
         repas: '',
@@ -71,7 +71,7 @@ function AdminDashboard() {
     });
     const [infoPatientsLoading, setInfoPatientsLoading] = useState(false);
 
-    // États pour les formulaires et modales (existants)
+    // Ã‰tats pour les formulaires et modales (existants)
     const [showJobForm, setShowJobForm] = useState(false);
     const [showEventForm, setShowEventForm] = useState(false);
     const [showSpecialtyForm, setShowSpecialtyForm] = useState(false);
@@ -85,14 +85,14 @@ function AdminDashboard() {
     const [selectedDate, setSelectedDate] = useState("");
     const [availableSlots, setAvailableSlots] = useState([]);
     
-    // États pour l'édition (existants)
+    // Ã‰tats pour l'Ã©dition (existants)
     const [editingPatient, setEditingPatient] = useState(null);
     const [editingDoctor, setEditingDoctor] = useState(null);
     const [editingActu, setEditingActu] = useState(null);
     const [editingEtablissement, setEditingEtablissement] = useState(null);
     const [editingPartenaire, setEditingPartenaire] = useState(null);
     
-    // Prévisualisations pour les modales d'édition
+    // PrÃ©visualisations pour les modales d'Ã©dition
     const [editPhotoPreview, setEditPhotoPreview] = useState(null);
     const [editActuPreview, setEditActuPreview] = useState(null);
     const [editEtabPreview, setEditEtabPreview] = useState(null);
@@ -109,7 +109,7 @@ function AdminDashboard() {
         setTimeout(() => setSuccessMsg(""), 3000);
     }
     
-    // ========== CHARGEMENT DES DONNÉES (existantes) ==========
+    // ========== CHARGEMENT DES DONNÃ‰ES (existantes) ==========
     const loadAppointments = async () => {
         try {
             const res = await fetch(`${API_BASE}/appointments?_=${Date.now()}`);
@@ -363,7 +363,7 @@ function AdminDashboard() {
         }
     };
     
-    // ========== CHARGEMENT DES NOUVELLES DONNÉES ==========
+    // ========== CHARGEMENT DES NOUVELLES DONNÃ‰ES ==========
     const loadRooms = async () => {
         try {
             const res = await fetch(`${API_BASE}/meeting-rooms`);
@@ -397,10 +397,10 @@ function AdminDashboard() {
         }
     };
 
-    // ========== JOUR D'OUVERTURE ==========
+    // â­ CHARGEMENT JOUR D'OUVERTURE (version ADMIN = /all)
     const loadJourOuverture = async () => {
         try {
-            const res = await fetch(`${API_BASE}/jour-ouverture`);
+            const res = await fetch(`${API_BASE}/jour-ouverture/all`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             setJourOuverture(Array.isArray(data) ? data : []);
@@ -444,10 +444,10 @@ function AdminDashboard() {
                 })
             });
             if (res.ok) {
-                showSuccess('✅ Informations patients mises à jour');
+                showSuccess('âœ… Informations patients mises Ã  jour');
                 loadInfoPatients();
             } else {
-                alert('❌ Erreur');
+                alert('âŒ Erreur');
             }
         } catch (err) {
             console.error('saveInfoPatients error:', err);
@@ -463,12 +463,12 @@ function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...roomForm, capacity: parseInt(roomForm.capacity) }),
             });
-            if (!res.ok) throw new Error('Erreur création');
-            setRoomsFeedback('✅ Salle créée');
+            if (!res.ok) throw new Error('Erreur crÃ©ation');
+            setRoomsFeedback('âœ… Salle crÃ©Ã©e');
             setRoomForm({ name: '', capacity: '', equipment: '', has_video: false });
             loadRooms();
         } catch (err) {
-            setRoomsFeedback(`❌ ${err.message}`);
+            setRoomsFeedback(`âŒ ${err.message}`);
         }
     };
 
@@ -480,13 +480,13 @@ function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...roomForm, capacity: parseInt(roomForm.capacity) }),
             });
-            if (!res.ok) throw new Error('Erreur mise à jour');
-            setRoomsFeedback('✅ Salle mise à jour');
+            if (!res.ok) throw new Error('Erreur mise Ã  jour');
+            setRoomsFeedback('âœ… Salle mise Ã  jour');
             setEditingRoom(null);
             setRoomForm({ name: '', capacity: '', equipment: '', has_video: false });
             loadRooms();
         } catch (err) {
-            setRoomsFeedback(`❌ ${err.message}`);
+            setRoomsFeedback(`âŒ ${err.message}`);
         }
     };
 
@@ -495,10 +495,10 @@ function AdminDashboard() {
         try {
             const res = await fetch(`${API_BASE}/meeting-rooms/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Erreur suppression');
-            setRoomsFeedback('✅ Salle supprimée');
+            setRoomsFeedback('âœ… Salle supprimÃ©e');
             loadRooms();
         } catch (err) {
-            setRoomsFeedback(`❌ ${err.message}`);
+            setRoomsFeedback(`âŒ ${err.message}`);
         }
     };
 
@@ -511,12 +511,12 @@ function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(staffForm),
             });
-            if (!res.ok) throw new Error('Erreur création');
-            setStaffFeedback('✅ Personnel ajouté');
+            if (!res.ok) throw new Error('Erreur crÃ©ation');
+            setStaffFeedback('âœ… Personnel ajoutÃ©');
             setStaffForm({ name: '', email: '', password: '', role: 'staff' });
             loadStaffList();
         } catch (err) {
-            setStaffFeedback(`❌ ${err.message}`);
+            setStaffFeedback(`âŒ ${err.message}`);
         }
     };
 
@@ -528,13 +528,13 @@ function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(staffForm),
             });
-            if (!res.ok) throw new Error('Erreur mise à jour');
-            setStaffFeedback('✅ Personnel mis à jour');
+            if (!res.ok) throw new Error('Erreur mise Ã  jour');
+            setStaffFeedback('âœ… Personnel mis Ã  jour');
             setEditingStaff(null);
             setStaffForm({ name: '', email: '', password: '', role: 'staff' });
             loadStaffList();
         } catch (err) {
-            setStaffFeedback(`❌ ${err.message}`);
+            setStaffFeedback(`âŒ ${err.message}`);
         }
     };
 
@@ -543,14 +543,14 @@ function AdminDashboard() {
         try {
             const res = await fetch(`${API_BASE}/admin/staff/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Erreur suppression');
-            setStaffFeedback('✅ Personnel supprimé');
+            setStaffFeedback('âœ… Personnel supprimÃ©');
             loadStaffList();
         } catch (err) {
-            setStaffFeedback(`❌ ${err.message}`);
+            setStaffFeedback(`âŒ ${err.message}`);
         }
     };
 
-    // ========== GESTION JOUR D'OUVERTURE ==========
+    // â­ GESTION JOUR D'OUVERTURE ==========
     const uploadMediaFile = async (file) => {
         const fd = new FormData();
         fd.append("image", file);
@@ -566,19 +566,19 @@ function AdminDashboard() {
         const titre = formData.get("titre");
         const description = formData.get("description");
         const ordre = parseInt(formData.get("ordre") || 0);
-        const active = formData.get("active") === "on" ? 1 : 0;
+        const active = formData.get("active") === "on";
         const fileField = type === 'video' ? 'videoFile' : 'imageFile';
         const file = formData.get(fileField);
 
         if (!file || file.size === 0) {
-            setJourFeedback('❌ Fichier requis');
+            setJourFeedback('âŒ Fichier requis');
             return;
         }
 
-        setJourFeedback('⏳ Upload en cours...');
+        setJourFeedback('â³ Upload en cours...');
         try {
             const url = await uploadMediaFile(file);
-            if (!url) { setJourFeedback('❌ Erreur upload'); return; }
+            if (!url) { setJourFeedback('âŒ Erreur upload'); return; }
 
             const payload = { type, titre, description, url, ordre, active };
             const res = await fetch(`${API_BASE}/jour-ouverture`, {
@@ -587,17 +587,17 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                setJourFeedback('✅ Média ajouté');
+                setJourFeedback('âœ… MÃ©dia ajoutÃ©');
                 loadJourOuverture();
                 e.target.reset();
                 setJourPreview(null);
                 setJourForm({ type: 'photo', titre: '', description: '', ordre: 0, active: true });
             } else {
-                setJourFeedback('❌ Erreur ajout');
+                setJourFeedback('âŒ Erreur ajout');
             }
         } catch (err) {
             console.error('addJourOuverture:', err);
-            setJourFeedback('❌ Erreur réseau');
+            setJourFeedback('âŒ Erreur rÃ©seau');
         }
     };
 
@@ -608,16 +608,16 @@ function AdminDashboard() {
         const titre = formData.get("titre");
         const description = formData.get("description");
         const ordre = parseInt(formData.get("ordre") || 0);
-        const active = formData.get("active") === "on" ? 1 : 0;
+        const active = formData.get("active") === "on";
 
         let url = editingJour.url;
         const fileField = type === 'video' ? 'videoFile' : 'imageFile';
         const file = formData.get(fileField);
 
         if (file && file.size > 0) {
-            setJourFeedback('⏳ Upload en cours...');
+            setJourFeedback('â³ Upload en cours...');
             const newUrl = await uploadMediaFile(file);
-            if (!newUrl) { setJourFeedback('❌ Erreur upload'); return; }
+            if (!newUrl) { setJourFeedback('âŒ Erreur upload'); return; }
             url = newUrl;
         }
 
@@ -629,25 +629,25 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                setJourFeedback('✅ Média mis à jour');
+                setJourFeedback('âœ… MÃ©dia mis Ã  jour');
                 loadJourOuverture();
                 setEditingJour(null);
                 setJourPreview(null);
             } else {
-                setJourFeedback('❌ Erreur mise à jour');
+                setJourFeedback('âŒ Erreur mise Ã  jour');
             }
         } catch (err) {
             console.error('updateJourOuverture:', err);
-            setJourFeedback('❌ Erreur réseau');
+            setJourFeedback('âŒ Erreur rÃ©seau');
         }
     };
 
     const deleteJourOuverture = async (id) => {
-        if (!window.confirm("Supprimer ce média ?")) return;
+        if (!window.confirm("Supprimer ce mÃ©dia ?")) return;
         try {
             const res = await fetch(`${API_BASE}/jour-ouverture/${id}`, { method: "DELETE" });
             if (res.ok) {
-                showSuccess("Média supprimé");
+                showSuccess("MÃ©dia supprimÃ©");
                 loadJourOuverture();
             }
         } catch (err) {
@@ -660,39 +660,39 @@ function AdminDashboard() {
         if (!window.confirm("Supprimer ce rendez-vous ?")) return;
         try {
             const res = await fetch(`${API_BASE}/appointments/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Rendez-vous supprimé"); loadAppointments(); }
+            if (res.ok) { showSuccess("Rendez-vous supprimÃ©"); loadAppointments(); }
         } catch (err) { console.error('deleteAppointment:', err); }
     };
     
     const deleteDoctor = async (id) => {
-        if (!window.confirm("Supprimer ce médecin ?")) return;
+        if (!window.confirm("Supprimer ce mÃ©decin ?")) return;
         try {
             const res = await fetch(`${API_BASE}/staff/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Médecin supprimé"); loadDoctors(); }
+            if (res.ok) { showSuccess("MÃ©decin supprimÃ©"); loadDoctors(); }
         } catch (err) { console.error('deleteDoctor:', err); }
     };
     
     const deleteEvent = async (id) => {
-        if (!window.confirm("Supprimer cet événement ?")) return;
+        if (!window.confirm("Supprimer cet Ã©vÃ©nement ?")) return;
         try {
             const res = await fetch(`${API_BASE}/events/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Événement supprimé"); loadEvents(); }
+            if (res.ok) { showSuccess("Ã‰vÃ©nement supprimÃ©"); loadEvents(); }
         } catch (err) { console.error('deleteEvent:', err); }
     };
     
     const deleteActualite = async (id) => {
-        if (!window.confirm("Supprimer cette actualité ?")) return;
+        if (!window.confirm("Supprimer cette actualitÃ© ?")) return;
         try {
             const res = await fetch(`${API_BASE}/actualites/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Actualité supprimée"); loadActualites(); }
+            if (res.ok) { showSuccess("ActualitÃ© supprimÃ©e"); loadActualites(); }
         } catch (err) { console.error('deleteActualite:', err); }
     };
     
     const deleteSpecialty = async (id) => {
-        if (!window.confirm("Supprimer cette spécialité ?")) return;
+        if (!window.confirm("Supprimer cette spÃ©cialitÃ© ?")) return;
         try {
             const res = await fetch(`${API_BASE}/specialties/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Spécialité supprimée"); loadSpecialties(); }
+            if (res.ok) { showSuccess("SpÃ©cialitÃ© supprimÃ©e"); loadSpecialties(); }
         } catch (err) { console.error('deleteSpecialty:', err); }
     };
     
@@ -700,7 +700,7 @@ function AdminDashboard() {
         if (!window.confirm("Supprimer cette offre ?")) return;
         try {
             const res = await fetch(`${API_BASE}/admin/jobs/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Offre supprimée"); loadJobs(); }
+            if (res.ok) { showSuccess("Offre supprimÃ©e"); loadJobs(); }
         } catch (err) { console.error('deleteJob:', err); }
     };
     
@@ -708,15 +708,15 @@ function AdminDashboard() {
         if (!window.confirm("Supprimer ce tarif ?")) return;
         try {
             const res = await fetch(`${API_BASE}/tarifs/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Tarif supprimé"); loadTarifs(); }
+            if (res.ok) { showSuccess("Tarif supprimÃ©"); loadTarifs(); }
         } catch (err) { console.error('deleteTarif:', err); }
     };
     
     const deleteAvailability = async (id) => {
-        if (!window.confirm("Supprimer ce créneau ?")) return;
+        if (!window.confirm("Supprimer ce crÃ©neau ?")) return;
         try {
             const res = await fetch(`${API_BASE}/availabilities/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Créneau supprimé"); loadAvailabilities(); }
+            if (res.ok) { showSuccess("CrÃ©neau supprimÃ©"); loadAvailabilities(); }
         } catch (err) { console.error('deleteAvailability:', err); }
     };
     
@@ -724,7 +724,7 @@ function AdminDashboard() {
         if (!window.confirm("Supprimer ce patient ?")) return;
         try {
             const res = await fetch(`${API_BASE}/admin/patients/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Patient supprimé"); loadPatients(); }
+            if (res.ok) { showSuccess("Patient supprimÃ©"); loadPatients(); }
         } catch (err) { console.error('deletePatient:', err); }
     };
     
@@ -732,7 +732,7 @@ function AdminDashboard() {
         if (!window.confirm("Supprimer cette photo ?")) return;
         try {
             const res = await fetch(`${API_BASE}/etablissement/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Photo supprimée"); loadEtablissement(); }
+            if (res.ok) { showSuccess("Photo supprimÃ©e"); loadEtablissement(); }
         } catch (err) { console.error('deleteEtablissement:', err); }
     };
     
@@ -740,28 +740,28 @@ function AdminDashboard() {
         if (!window.confirm("Supprimer ce partenaire ?")) return;
         try {
             const res = await fetch(`${API_BASE}/partenaires/${id}`, { method: "DELETE" });
-            if (res.ok) { showSuccess("Partenaire supprimé"); loadPartenaires(); }
+            if (res.ok) { showSuccess("Partenaire supprimÃ©"); loadPartenaires(); }
         } catch (err) { console.error('deletePartenaire:', err); }
     };
     
-    // ========== VALIDATION TÉLÉCONSULTATION ==========
+    // ========== VALIDATION TÃ‰LÃ‰CONSULTATION ==========
     const validateTeleconsultation = async (id) => {
-        if (!window.confirm("Valider cette téléconsultation ?")) return;
+        if (!window.confirm("Valider cette tÃ©lÃ©consultation ?")) return;
         try {
             const res = await fetch(`${API_BASE}/admin/appointments/${id}/validate-teleconsultation`, { method: "PUT" });
             if (res.ok) {
-                showSuccess("Téléconsultation validée");
+                showSuccess("TÃ©lÃ©consultation validÃ©e");
                 loadAppointments();
             } else alert("Erreur");
         } catch (err) { console.error('validateTeleconsultation:', err); }
     };
     
-    // ========== RÉINITIALISATION MOT DE PASSE MÉDECIN ==========
+    // ========== RÃ‰INITIALISATION MOT DE PASSE MÃ‰DECIN ==========
     const resetDoctorPassword = async (id) => {
-        const newPassword = window.prompt('Entrez le nouveau mot de passe pour ce médecin (6 caractères min) :');
+        const newPassword = window.prompt('Entrez le nouveau mot de passe pour ce mÃ©decin (6 caractÃ¨res min) :');
         if (newPassword === null) return;
         if (!newPassword || newPassword.length < 6) {
-            alert('Le mot de passe doit faire au moins 6 caractères.');
+            alert('Le mot de passe doit faire au moins 6 caractÃ¨res.');
             return;
         }
         try {
@@ -771,13 +771,13 @@ function AdminDashboard() {
                 body: JSON.stringify({ password: newPassword })
             });
             if (res.ok) {
-                showSuccess('✅ Mot de passe réinitialisé avec succès');
+                showSuccess('âœ… Mot de passe rÃ©initialisÃ© avec succÃ¨s');
             } else {
                 const err = await res.json();
-                alert('❌ Erreur : ' + (err.error || 'Réessayez'));
+                alert('âŒ Erreur : ' + (err.error || 'RÃ©essayez'));
             }
         } catch (err) {
-            alert('❌ Erreur réseau');
+            alert('âŒ Erreur rÃ©seau');
             console.error(err);
         }
     };
@@ -798,7 +798,7 @@ function AdminDashboard() {
         };
         try {
             const res = await fetch(`${API_BASE}/admin/jobs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-            if (res.ok) { showSuccess("Offre ajoutée"); loadJobs(); setShowJobForm(false); e.target.reset(); }
+            if (res.ok) { showSuccess("Offre ajoutÃ©e"); loadJobs(); setShowJobForm(false); e.target.reset(); }
             else alert("Erreur");
         } catch (err) { console.error('addJob:', err); }
     };
@@ -820,7 +820,7 @@ function AdminDashboard() {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                showSuccess("Événement ajouté");
+                showSuccess("Ã‰vÃ©nement ajoutÃ©");
                 loadEvents();
                 setShowEventForm(false);
                 e.target.reset();
@@ -848,7 +848,7 @@ function AdminDashboard() {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                showSuccess("Spécialité ajoutée");
+                showSuccess("SpÃ©cialitÃ© ajoutÃ©e");
                 loadSpecialties();
                 setShowSpecialtyForm(false);
                 e.target.reset();
@@ -873,7 +873,7 @@ function AdminDashboard() {
         };
         try {
             const res = await fetch(`${API_BASE}/admin/patients`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-            if (res.ok) { showSuccess("Patient ajouté"); loadPatients(); setShowPatientForm(false); e.target.reset(); }
+            if (res.ok) { showSuccess("Patient ajoutÃ©"); loadPatients(); setShowPatientForm(false); e.target.reset(); }
             else alert("Erreur");
         } catch (err) { console.error('addPatient:', err); }
     };
@@ -894,7 +894,7 @@ function AdminDashboard() {
                 const uploadData = await uploadRes.json();
                 if (uploadData.imageUrl) image_url = uploadData.imageUrl;
                 else { alert("Erreur upload"); return; }
-            } catch (err) { alert("Erreur réseau upload"); return; }
+            } catch (err) { alert("Erreur rÃ©seau upload"); return; }
         }
         const payload = { titre, description, image_url, active };
         try {
@@ -904,7 +904,7 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                showSuccess("Actualité ajoutée");
+                showSuccess("ActualitÃ© ajoutÃ©e");
                 loadActualites();
                 setShowActuForm(false);
                 e.target.reset();
@@ -925,7 +925,7 @@ function AdminDashboard() {
         const time_slot = formData.get("start_time") + "-" + formData.get("end_time");
         try {
             const res = await fetch(`${API_BASE}/availabilities`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ doctor_id, date, time_slot }) });
-            if (res.ok) { showSuccess("Créneau ajouté"); loadAvailabilities(); setShowAvailabilityForm(false); e.target.reset(); }
+            if (res.ok) { showSuccess("CrÃ©neau ajoutÃ©"); loadAvailabilities(); setShowAvailabilityForm(false); e.target.reset(); }
             else alert("Erreur");
         } catch (err) { console.error('addAvailability:', err); }
     };
@@ -947,7 +947,7 @@ function AdminDashboard() {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                showSuccess("Tarif ajouté");
+                showSuccess("Tarif ajoutÃ©");
                 loadTarifs();
                 e.target.reset();
             } else {
@@ -968,8 +968,8 @@ function AdminDashboard() {
                     contenu: JSON.stringify(siteContent)
                 })
             });
-            if (res.ok) alert("✅ Contenu mis à jour !");
-            else alert("❌ Erreur");
+            if (res.ok) alert("âœ… Contenu mis Ã  jour !");
+            else alert("âŒ Erreur");
         } catch (err) { console.error('saveContent:', err); }
     };
     
@@ -1001,7 +1001,7 @@ function AdminDashboard() {
                     contenu: JSON.stringify(updates)
                 })
             });
-            if (res.ok) { showSuccess("Footer mis à jour !"); loadFooterContent(); }
+            if (res.ok) { showSuccess("Footer mis Ã  jour !"); loadFooterContent(); }
             else alert("Erreur");
         } catch (err) { console.error('saveFooter:', err); }
     };
@@ -1022,7 +1022,7 @@ function AdminDashboard() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updates)
             });
-            if (res.ok) { showSuccess("Configuration mise à jour"); loadPaymentConfig(); }
+            if (res.ok) { showSuccess("Configuration mise Ã  jour"); loadPaymentConfig(); }
             else alert("Erreur");
         } catch (err) { console.error('savePaymentConfig:', err); }
     };
@@ -1039,7 +1039,7 @@ function AdminDashboard() {
                 body: JSON.stringify({ subject, content })
             });
             const data = await res.json();
-            if (res.ok) alert("Envoi terminé : " + data.successCount + " emails réussis.");
+            if (res.ok) alert("Envoi terminÃ© : " + data.successCount + " emails rÃ©ussis.");
             else alert("Erreur");
         } catch (err) { console.error('sendNewsletter:', err); }
     };
@@ -1062,10 +1062,10 @@ function AdminDashboard() {
     };
     
     const publishResult = async (id) => {
-        if (!window.confirm("Publier ce résultat ?")) return;
+        if (!window.confirm("Publier ce rÃ©sultat ?")) return;
         try {
             const res = await fetch(`${API_BASE}/admin/results/${id}/publish`, { method: "PUT" });
-            if (res.ok) { showSuccess("Résultat publié"); loadPendingResults(); }
+            if (res.ok) { showSuccess("RÃ©sultat publiÃ©"); loadPendingResults(); }
         } catch (err) { console.error('publishResult:', err); }
     };
     
@@ -1083,7 +1083,7 @@ function AdminDashboard() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ patient_id, type, description, file_url })
             });
-            if (res.ok) { showSuccess("Résultat ajouté"); e.target.reset(); loadPendingResults(); }
+            if (res.ok) { showSuccess("RÃ©sultat ajoutÃ©"); e.target.reset(); loadPendingResults(); }
             else alert("Erreur");
         } catch (err) { console.error('addResult:', err); }
     };
@@ -1091,11 +1091,11 @@ function AdminDashboard() {
     const markAppointmentAsViewed = async (id) => {
         try {
             const res = await fetch(`${API_BASE}/admin/appointments/${id}/view`, { method: "PUT" });
-            if (res.ok) { showSuccess("Rendez-vous marqué comme vu"); loadAppointments(); }
+            if (res.ok) { showSuccess("Rendez-vous marquÃ© comme vu"); loadAppointments(); }
         } catch (err) { console.error('markAppointmentAsViewed:', err); }
     };
     
-    // ========== ÉDITIONS (existantes) ==========
+    // ========== Ã‰DITIONS (existantes) ==========
     const updatePatient = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -1114,7 +1114,7 @@ function AdminDashboard() {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                showSuccess("Patient mis à jour");
+                showSuccess("Patient mis Ã  jour");
                 loadPatients();
                 setEditingPatient(null);
             } else alert("Erreur");
@@ -1148,7 +1148,7 @@ function AdminDashboard() {
                     return;
                 }
             } catch (err) {
-                alert("Erreur réseau lors de l'upload");
+                alert("Erreur rÃ©seau lors de l'upload");
                 console.error(err);
                 return;
             }
@@ -1156,7 +1156,7 @@ function AdminDashboard() {
 
         const payload = {
             full_name,
-            profession: "Médecin",
+            profession: "MÃ©decin",
             specialty,
             department,
             email,
@@ -1174,16 +1174,16 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                showSuccess("Médecin mis à jour");
+                showSuccess("MÃ©decin mis Ã  jour");
                 loadDoctors();
                 setEditingDoctor(null);
                 setEditPhotoPreview(null);
             } else {
                 const errData = await res.json();
-                alert("❌ Erreur : " + (errData.error || res.statusText));
+                alert("âŒ Erreur : " + (errData.error || res.statusText));
             }
         } catch (err) {
-            alert("❌ Erreur réseau");
+            alert("âŒ Erreur rÃ©seau");
             console.error(err);
         }
     };
@@ -1209,7 +1209,7 @@ function AdminDashboard() {
                     return;
                 }
             } catch (err) {
-                alert("Erreur réseau lors de l'upload");
+                alert("Erreur rÃ©seau lors de l'upload");
                 console.error(err);
                 return;
             }
@@ -1222,16 +1222,16 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                showSuccess("Actualité mise à jour");
+                showSuccess("ActualitÃ© mise Ã  jour");
                 loadActualites();
                 setEditingActu(null);
                 setEditActuPreview(null);
             } else {
                 const errData = await res.json();
-                alert("❌ Erreur : " + (errData.error || res.statusText));
+                alert("âŒ Erreur : " + (errData.error || res.statusText));
             }
         } catch (err) {
-            alert("❌ Erreur réseau");
+            alert("âŒ Erreur rÃ©seau");
             console.error(err);
         }
     };
@@ -1257,7 +1257,7 @@ function AdminDashboard() {
                     return;
                 }
             } catch (err) {
-                alert("Erreur réseau lors de l'upload");
+                alert("Erreur rÃ©seau lors de l'upload");
                 console.error(err);
                 return;
             }
@@ -1270,16 +1270,16 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                showSuccess("Photo mise à jour");
+                showSuccess("Photo mise Ã  jour");
                 loadEtablissement();
                 setEditingEtablissement(null);
                 setEditEtabPreview(null);
             } else {
                 const errData = await res.json();
-                alert("❌ Erreur : " + (errData.error || res.statusText));
+                alert("âŒ Erreur : " + (errData.error || res.statusText));
             }
         } catch (err) {
-            alert("❌ Erreur réseau");
+            alert("âŒ Erreur rÃ©seau");
             console.error(err);
         }
     };
@@ -1306,7 +1306,7 @@ function AdminDashboard() {
                     return;
                 }
             } catch (err) {
-                alert("Erreur réseau lors de l'upload");
+                alert("Erreur rÃ©seau lors de l'upload");
                 console.error(err);
                 return;
             }
@@ -1319,16 +1319,16 @@ function AdminDashboard() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                showSuccess("Partenaire mis à jour");
+                showSuccess("Partenaire mis Ã  jour");
                 loadPartenaires();
                 setEditingPartenaire(null);
                 setEditPartPreview(null);
             } else {
                 const errData = await res.json();
-                alert("❌ Erreur : " + (errData.error || res.statusText));
+                alert("âŒ Erreur : " + (errData.error || res.statusText));
             }
         } catch (err) {
-            alert("❌ Erreur réseau");
+            alert("âŒ Erreur rÃ©seau");
             console.error(err);
         }
     };
@@ -1342,7 +1342,7 @@ function AdminDashboard() {
                 body: JSON.stringify({ is_active: newStatus })
             });
             if (res.ok) {
-                showSuccess(`Patient ${newStatus ? 'activé' : 'désactivé'}`);
+                showSuccess(`Patient ${newStatus ? 'activÃ©' : 'dÃ©sactivÃ©'}`);
                 loadPatients();
             } else alert("Erreur");
         } catch (err) { console.error('togglePatientStatus:', err); }
@@ -1355,26 +1355,26 @@ function AdminDashboard() {
         { id: "applications", label: "Candidatures" },
         { id: "stats", label: "Statistiques" },
         { id: "jobs", label: "Offres d'emploi" },
-        { id: "manage", label: "Disponibilités" },
-        { id: "doctors", label: "Médecins" },
-        { id: "events", label: "Événements" },
+        { id: "manage", label: "DisponibilitÃ©s" },
+        { id: "doctors", label: "MÃ©decins" },
+        { id: "events", label: "Ã‰vÃ©nements" },
         { id: "content", label: "Contenu du site" },
-        { id: "actualites", label: "Actualités" },
-        { id: "specialties", label: "Spécialités" },
-        { id: "etablissement", label: "Établissement" },
+        { id: "actualites", label: "ActualitÃ©s" },
+        { id: "specialties", label: "SpÃ©cialitÃ©s" },
+        { id: "etablissement", label: "Ã‰tablissement" },
         { id: "partenaires", label: "Partenaires" },
         { id: "newsletter", label: "Newsletter" },
         { id: "footer", label: "Footer" },
         { id: "tarifs", label: "Tarifs" },
         { id: "caisse", label: "Caisse" },
-        { id: "results", label: "Résultats labo" },
+        { id: "results", label: "RÃ©sultats labo" },
         { id: "patients", label: "Patients" },
         { id: "paiements-manuels", label: "Paiements manuels" },
-        { id: "messages", label: "📩 Messages" },
-        { id: "rooms", label: "🏢 Salles de réunion" },
-        { id: "staff", label: "👥 Personnel hospitalier" },
-        { id: "infos-patients", label: "📋 Infos patients" },
-        { id: "jour-ouverture", label: "🎉 Jour d'ouverture" }
+        { id: "messages", label: "ðŸ“© Messages" },
+        { id: "rooms", label: "ðŸ¢ Salles de rÃ©union" },
+        { id: "staff", label: "ðŸ‘¥ Personnel hospitalier" },
+        { id: "infos-patients", label: "ðŸ“‹ Infos patients" },
+        { id: "jour-ouverture", label: "ðŸŽ‰ Jour d'ouverture" }
     ];
     
     // ========== CHARGEMENT INITIAL ==========
@@ -1436,7 +1436,7 @@ function AdminDashboard() {
     
     // ========== RENDU JSX ==========
     return React.createElement("div", { style: { maxWidth: "1400px", margin: "auto", background: "white", borderRadius: "24px", padding: "20px", boxShadow: "0 8px 20px rgba(0,0,0,0.05)" } },
-        React.createElement("h1", { style: { color: "#0b6e8f", borderLeft: "5px solid #2ec4b6", paddingLeft: "20px", marginTop: 0 } }, "📋 Administration Medical Center Elizabeth"),
+        React.createElement("h1", { style: { color: "#0b6e8f", borderLeft: "5px solid #2ec4b6", paddingLeft: "20px", marginTop: 0 } }, "ðŸ“‹ Administration Medical Center Elizabeth"),
         successMsg && React.createElement("div", { style: { background: "#28a745", color: "white", padding: "10px", borderRadius: "5px", marginBottom: "20px" } }, successMsg),
         React.createElement("div", { style: { display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid #ddd", flexWrap: "wrap" } }, tabs.map(tab => 
             React.createElement("div", { key: tab.id, onClick: () => setActiveTab(tab.id), style: { padding: "10px 20px", cursor: "pointer", background: activeTab === tab.id ? "#0b6e8f" : "#e9ecef", color: activeTab === tab.id ? "white" : "#666", borderRadius: "8px 8px 0 0" } }, tab.label)
@@ -1444,7 +1444,7 @@ function AdminDashboard() {
         
         // ===== RENDEZ-VOUS =====
         activeTab === "rdv" && React.createElement("div", null,
-            React.createElement("h2", null, "📋 Rendez-vous"),
+            React.createElement("h2", null, "ðŸ“‹ Rendez-vous"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
@@ -1454,7 +1454,7 @@ function AdminDashboard() {
                             React.createElement("th", null, "Email"),
                             React.createElement("th", null, "Date"),
                             React.createElement("th", null, "Heure"),
-                            React.createElement("th", null, "Téléconsultation"),
+                            React.createElement("th", null, "TÃ©lÃ©consultation"),
                             React.createElement("th", null, "Actions")
                         )
                     ),
@@ -1467,11 +1467,11 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, rdv.time),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } },
                                 rdv.teleconsultation_validated ? 
-                                    React.createElement("span", { style: { color: "green" } }, "✅ Validée") :
+                                    React.createElement("span", { style: { color: "green" } }, "âœ… ValidÃ©e") :
                                     React.createElement("button", { onClick: () => validateTeleconsultation(rdv.id), style: { background: "#ff9f1c", color: "white", border: "none", padding: "4px 8px", borderRadius: "12px", cursor: "pointer" } }, "Valider")
                             ),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
-                                React.createElement("button", { onClick: () => deleteAppointment(rdv.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                                React.createElement("button", { onClick: () => deleteAppointment(rdv.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                             )
                         )
                     ))
@@ -1481,7 +1481,7 @@ function AdminDashboard() {
         
         // ===== CALENDRIER =====
         activeTab === "calendar" && React.createElement("div", null,
-            React.createElement("h2", null, "📅 Calendrier des disponibilités"),
+            React.createElement("h2", null, "ðŸ“… Calendrier des disponibilitÃ©s"),
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "15px" } },
                 calendarData.map(day => 
                     React.createElement("div", { key: day.date, style: { border: "1px solid #ddd", borderRadius: "8px", padding: "10px", background: "#f8f9fa" } },
@@ -1489,7 +1489,7 @@ function AdminDashboard() {
                         day.slots.map(slot => 
                             React.createElement("div", { key: slot.id, style: { fontSize: "0.85rem", margin: "5px 0", display: "flex", justifyContent: "space-between" } },
                                 React.createElement("span", null, escapeHtml(slot.doctor_name), " - ", slot.time_slot),
-                                React.createElement("span", { style: { color: slot.is_booked ? "red" : "green" } }, slot.is_booked ? "Réservé" : "Libre")
+                                React.createElement("span", { style: { color: slot.is_booked ? "red" : "green" } }, slot.is_booked ? "RÃ©servÃ©" : "Libre")
                             )
                         )
                     )
@@ -1499,13 +1499,13 @@ function AdminDashboard() {
         
         // ===== CANDIDATURES =====
         activeTab === "applications" && React.createElement("div", null,
-            React.createElement("h2", null, "📋 Candidatures reçues"),
+            React.createElement("h2", null, "ðŸ“‹ Candidatures reÃ§ues"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
                             React.createElement("th", null, "ID"), React.createElement("th", null, "Poste"), React.createElement("th", null, "Candidat"),
-                            React.createElement("th", null, "Email"), React.createElement("th", null, "Téléphone"), React.createElement("th", null, "Message"),
+                            React.createElement("th", null, "Email"), React.createElement("th", null, "TÃ©lÃ©phone"), React.createElement("th", null, "Message"),
                             React.createElement("th", null, "CV"), React.createElement("th", null, "Date"), React.createElement("th", null, "Statut")
                         )
                     ),
@@ -1521,7 +1521,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(app.message || "-")),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
                                 app.cv_url ? 
-                                    React.createElement("a", { href: cvUrl, target: "_blank", style: { background: "#0b6e8f", color: "white", padding: "4px 8px", borderRadius: "4px", textDecoration: "none", fontSize: "0.8rem" } }, "📄 Télécharger CV") :
+                                    React.createElement("a", { href: cvUrl, target: "_blank", style: { background: "#0b6e8f", color: "white", padding: "4px 8px", borderRadius: "4px", textDecoration: "none", fontSize: "0.8rem" } }, "ðŸ“„ TÃ©lÃ©charger CV") :
                                     "-"
                             ),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, new Date(app.applied_date).toLocaleString()),
@@ -1534,7 +1534,7 @@ function AdminDashboard() {
         
         // ===== STATISTIQUES =====
         activeTab === "stats" && React.createElement("div", null,
-            React.createElement("h2", null, "📊 Statistiques"),
+            React.createElement("h2", null, "ðŸ“Š Statistiques"),
             React.createElement("div", { style: { display: "flex", gap: "20px", flexWrap: "wrap" } },
                 React.createElement("div", { style: { background: "#e9ecef", borderRadius: "16px", padding: "16px", textAlign: "center", minWidth: "150px" } },
                     React.createElement("div", { style: { fontSize: "2rem", fontWeight: "bold", color: "#0b6e8f" } },
@@ -1543,33 +1543,33 @@ function AdminDashboard() {
                     React.createElement("div", null, "Total RDV")
                 )
             ),
-            React.createElement("h3", null, "📅 Par jour"),
+            React.createElement("h3", null, "ðŸ“… Par jour"),
             React.createElement("ul", null, 
                 (stats.perDay && stats.perDay.length > 0) ? 
                     stats.perDay.map(d => React.createElement("li", { key: d.date }, `${d.date} : ${d.nb} RDV`)) :
-                    React.createElement("li", null, "Aucune donnée")
+                    React.createElement("li", null, "Aucune donnÃ©e")
             ),
-            React.createElement("h3", null, "👨‍⚕️ Par médecin"),
+            React.createElement("h3", null, "ðŸ‘¨â€âš•ï¸ Par mÃ©decin"),
             React.createElement("ul", null, 
                 (stats.perDoctor && stats.perDoctor.length > 0) ? 
                     stats.perDoctor.map(d => React.createElement("li", { key: d.name }, `${d.name} : ${d.nb} RDV`)) :
-                    React.createElement("li", null, "Aucune donnée")
+                    React.createElement("li", null, "Aucune donnÃ©e")
             )
         ),
         
         // ===== OFFRES D'EMPLOI =====
         activeTab === "jobs" && React.createElement("div", null,
-            React.createElement("h2", null, "💼 Offres d'emploi"),
+            React.createElement("h2", null, "ðŸ’¼ Offres d'emploi"),
             React.createElement("button", { onClick: () => setShowJobForm(!showJobForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showJobForm ? "-" : "+", " Ajouter"),
             showJobForm && React.createElement("form", { onSubmit: addJob, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "title", placeholder: "Titre", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("input", { type: "text", name: "department", placeholder: "Département", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "text", name: "department", placeholder: "DÃ©partement", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("select", { name: "contract_type", style: { width: "100%", marginBottom: "8px", padding: "8px" } }, 
                     React.createElement("option", null, "CDI"), React.createElement("option", null, "CDD"), React.createElement("option", null, "Stage")
                 ),
                 React.createElement("input", { type: "text", name: "location", placeholder: "Localisation", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("textarea", { name: "description", placeholder: "Description", rows: "3", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("textarea", { name: "requirements", placeholder: "Prérequis", rows: "3", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("textarea", { name: "requirements", placeholder: "PrÃ©requis", rows: "3", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "text", name: "salary_range", placeholder: "Salaire", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("label", null, React.createElement("input", { type: "checkbox", name: "active", defaultChecked: true }), " Actif"),
                 React.createElement("br", null),
@@ -1579,7 +1579,7 @@ function AdminDashboard() {
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
-                            React.createElement("th", null, "ID"), React.createElement("th", null, "Titre"), React.createElement("th", null, "Département"),
+                            React.createElement("th", null, "ID"), React.createElement("th", null, "Titre"), React.createElement("th", null, "DÃ©partement"),
                             React.createElement("th", null, "Contrat"), React.createElement("th", null, "Localisation"), React.createElement("th", null, "Actif"), React.createElement("th", null, "Actions")
                         )
                     ),
@@ -1590,21 +1590,21 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(job.department)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(job.contract_type)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(job.location)),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, job.active ? "✅ Oui" : "❌ Non"),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteJob(job.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"))
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, job.active ? "âœ… Oui" : "âŒ Non"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteJob(job.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸"))
                         )
                     ))
                 )
             )
         ),
         
-        // ===== DISPONIBILITÉS =====
+        // ===== DISPONIBILITÃ‰S =====
         activeTab === "manage" && React.createElement("div", null,
-            React.createElement("h3", null, "Gestion des disponibilités"),
-            React.createElement("button", { onClick: () => setShowAvailabilityForm(!showAvailabilityForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showAvailabilityForm ? "-" : "+", " Ajouter créneau"),
+            React.createElement("h3", null, "Gestion des disponibilitÃ©s"),
+            React.createElement("button", { onClick: () => setShowAvailabilityForm(!showAvailabilityForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showAvailabilityForm ? "-" : "+", " Ajouter crÃ©neau"),
             showAvailabilityForm && React.createElement("form", { onSubmit: addAvailability, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("select", { name: "doctor_id", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }, 
-                    React.createElement("option", { value: "" }, "Médecin"),
+                    React.createElement("option", { value: "" }, "MÃ©decin"),
                     doctors.map(d => React.createElement("option", { key: d.id, value: d.id }, escapeHtml(d.full_name)))
                 ),
                 React.createElement("input", { type: "date", name: "date", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1613,12 +1613,12 @@ function AdminDashboard() {
                 React.createElement("div", { style: { clear: "both" } }),
                 React.createElement("button", { type: "submit", style: { marginTop: "10px", background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Ajouter")
             ),
-            React.createElement("h3", null, "Liste des créneaux"),
+            React.createElement("h3", null, "Liste des crÃ©neaux"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
-                            React.createElement("th", null, "Médecin"), React.createElement("th", null, "Date"), React.createElement("th", null, "Créneau"),
+                            React.createElement("th", null, "MÃ©decin"), React.createElement("th", null, "Date"), React.createElement("th", null, "CrÃ©neau"),
                             React.createElement("th", null, "Statut"), React.createElement("th", null, "Action")
                         )
                     ),
@@ -1627,17 +1627,17 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(av.doctor_name)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, av.date),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, av.time_slot),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd", color: av.is_booked ? "red" : "green" } }, av.is_booked ? "Réservé" : "Libre"),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, !av.is_booked && React.createElement("button", { onClick: () => deleteAvailability(av.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"))
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd", color: av.is_booked ? "red" : "green" } }, av.is_booked ? "RÃ©servÃ©" : "Libre"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, !av.is_booked && React.createElement("button", { onClick: () => deleteAvailability(av.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸"))
                         )
                     ))
                 )
             )
         ),
         
-        // ===== MÉDECINS =====
+        // ===== MÃ‰DECINS =====
         activeTab === "doctors" && React.createElement("div", null,
-            React.createElement("h3", null, "➕ Ajouter un médecin"),
+            React.createElement("h3", null, "âž• Ajouter un mÃ©decin"),
             React.createElement("form", { onSubmit: async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
@@ -1647,7 +1647,7 @@ function AdminDashboard() {
                 const email = formData.get("email");
                 const password = formData.get("password");
                 const telegram_chat_id = formData.get("telegram_chat_id") || null;
-                const profession = "Médecin";
+                const profession = "MÃ©decin";
                 const active = formData.get("active") === "on" ? 1 : 0;
                 const photoFile = formData.get("photo");
                 let photo_url = null;
@@ -1686,20 +1686,20 @@ function AdminDashboard() {
                     });
                     
                     if (res.ok) {
-                        showSuccess("Médecin ajouté");
+                        showSuccess("MÃ©decin ajoutÃ©");
                         loadDoctors();
                         e.target.reset();
                     } else {
                         const errData = await res.json();
-                        alert("❌ Erreur : " + (errData.error || errData.message || res.statusText));
+                        alert("âŒ Erreur : " + (errData.error || errData.message || res.statusText));
                     }
                 } catch (err) {
-                    console.error("❌ Erreur réseau :", err);
-                    alert("❌ Erreur réseau : " + err.message);
+                    console.error("âŒ Erreur rÃ©seau :", err);
+                    alert("âŒ Erreur rÃ©seau : " + err.message);
                 }
             }, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "full_name", placeholder: "Nom complet", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("input", { type: "text", name: "specialty", placeholder: "Spécialité", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "text", name: "specialty", placeholder: "SpÃ©cialitÃ©", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "text", name: "department", placeholder: "Service", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "email", name: "email", placeholder: "Email", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "password", name: "password", placeholder: "Mot de passe", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1710,12 +1710,12 @@ function AdminDashboard() {
                 React.createElement("br", null),
                 React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Ajouter")
             ),
-            React.createElement("h3", null, "📋 Liste des médecins"),
+            React.createElement("h3", null, "ðŸ“‹ Liste des mÃ©decins"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
-                            React.createElement("th", null, "ID"), React.createElement("th", null, "Nom"), React.createElement("th", null, "Spécialité"),
+                            React.createElement("th", null, "ID"), React.createElement("th", null, "Nom"), React.createElement("th", null, "SpÃ©cialitÃ©"),
                             React.createElement("th", null, "Photo"), React.createElement("th", null, "Telegram ID"), React.createElement("th", null, "Actif"), React.createElement("th", null, "Actions")
                         )
                     ),
@@ -1726,11 +1726,11 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.specialty || d.profession)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.photo_url ? React.createElement("img", { src: `${MEDIA_BASE}/${d.photo_url}`, style: { width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" } }) : "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(d.telegram_chat_id || "-")),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.active ? "✅" : "❌"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, d.active ? "âœ…" : "âŒ"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
-                                React.createElement("button", { onClick: () => { setEditingDoctor(d); setEditPhotoPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                                React.createElement("button", { onClick: () => deleteDoctor(d.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"),
-                                React.createElement("button", { onClick: () => resetDoctorPassword(d.id), style: { color: "#0b6e8f", background: "none", border: "none", cursor: "pointer", marginLeft: "5px" } }, "🔑")
+                                React.createElement("button", { onClick: () => { setEditingDoctor(d); setEditPhotoPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                                React.createElement("button", { onClick: () => deleteDoctor(d.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸"),
+                                React.createElement("button", { onClick: () => resetDoctorPassword(d.id), style: { color: "#0b6e8f", background: "none", border: "none", cursor: "pointer", marginLeft: "5px" } }, "ðŸ”‘")
                             )
                         )
                     ))
@@ -1738,17 +1738,17 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MODALE ÉDITION MÉDECIN =====
+        // ===== MODALE Ã‰DITION MÃ‰DECIN =====
         editingDoctor && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 } },
             React.createElement("div", { style: { background: "white", padding: "20px", borderRadius: "16px", maxWidth: "500px", width: "90%" } },
-                React.createElement("h3", null, "Modifier le médecin"),
+                React.createElement("h3", null, "Modifier le mÃ©decin"),
                 React.createElement("form", { onSubmit: updateDoctor },
                     React.createElement("input", { type: "text", name: "full_name", defaultValue: editingDoctor.full_name, placeholder: "Nom complet", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                    React.createElement("input", { type: "text", name: "specialty", defaultValue: editingDoctor.specialty || "", placeholder: "Spécialité", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                    React.createElement("input", { type: "text", name: "specialty", defaultValue: editingDoctor.specialty || "", placeholder: "SpÃ©cialitÃ©", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("input", { type: "text", name: "department", defaultValue: editingDoctor.department || "", placeholder: "Service", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("input", { type: "email", name: "email", defaultValue: editingDoctor.email, placeholder: "Email", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("input", { type: "text", name: "telegram_chat_id", defaultValue: editingDoctor.telegram_chat_id || "", placeholder: "Telegram Chat ID", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                    React.createElement("input", { type: "tel", name: "phone", defaultValue: editingDoctor.phone || "", placeholder: "Téléphone", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                    React.createElement("input", { type: "tel", name: "phone", defaultValue: editingDoctor.phone || "", placeholder: "TÃ©lÃ©phone", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("div", { style: { marginBottom: "8px" } },
                         React.createElement("label", null, "Photo actuelle : "),
                         editingDoctor.photo_url ? 
@@ -1763,7 +1763,7 @@ function AdminDashboard() {
                         }
                     }, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     editPhotoPreview && React.createElement("img", { src: editPhotoPreview, style: { width: "60px", height: "60px", borderRadius: "50%", objectFit: "cover", marginBottom: "8px" }, alt: "Nouvelle photo" }),
-                    React.createElement("input", { type: "password", name: "password", placeholder: "Nouveau mot de passe (laisser vide pour inchangé)", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                    React.createElement("input", { type: "password", name: "password", placeholder: "Nouveau mot de passe (laisser vide pour inchangÃ©)", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("label", { style: { display: "block", marginBottom: "8px" } },
                         React.createElement("input", { type: "checkbox", name: "active", defaultChecked: editingDoctor.active === 1 }),
                         " Compte actif"
@@ -1776,9 +1776,9 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== ÉVÉNEMENTS =====
+        // ===== Ã‰VÃ‰NEMENTS =====
         activeTab === "events" && React.createElement("div", null,
-            React.createElement("h3", null, "➕ Ajouter un événement"),
+            React.createElement("h3", null, "âž• Ajouter un Ã©vÃ©nement"),
             React.createElement("form", { onSubmit: addEvent, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "title", placeholder: "Titre", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("textarea", { name: "description", placeholder: "Description", rows: "2", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1788,13 +1788,13 @@ function AdminDashboard() {
                 React.createElement("br", null),
                 React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Ajouter")
             ),
-            React.createElement("h3", null, "📅 Événements"),
+            React.createElement("h3", null, "ðŸ“… Ã‰vÃ©nements"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
                             React.createElement("th", null, "ID"), React.createElement("th", null, "Titre"), React.createElement("th", null, "Description"),
-                            React.createElement("th", null, "Début"), React.createElement("th", null, "Fin"), React.createElement("th", null, "Actif"), React.createElement("th", null, "Actions")
+                            React.createElement("th", null, "DÃ©but"), React.createElement("th", null, "Fin"), React.createElement("th", null, "Actif"), React.createElement("th", null, "Actions")
                         )
                     ),
                     React.createElement("tbody", null, events.map(e =>
@@ -1805,7 +1805,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, e.start_date || "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, e.end_date || "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, e.active ? "Oui" : "Non"),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteEvent(e.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"))
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteEvent(e.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸"))
                         )
                     ))
                 )
@@ -1814,18 +1814,18 @@ function AdminDashboard() {
         
         // ===== CONTENU DU SITE =====
         activeTab === "content" && React.createElement("div", null,
-            React.createElement("h2", null, "✏️ Contenu du site"),
+            React.createElement("h2", null, "âœï¸ Contenu du site"),
             React.createElement("select", { value: selectedPage, onChange: e => { setSelectedPage(e.target.value); loadContent(e.target.value); }, style: { padding: "8px", marginBottom: "20px", borderRadius: "8px" } },
                 React.createElement("option", { value: "home" }, "Accueil"),
-                React.createElement("option", { value: "about" }, "Nous connaître"),
+                React.createElement("option", { value: "about" }, "Nous connaÃ®tre"),
                 React.createElement("option", { value: "support" }, "Nous soutenir"),
                 React.createElement("option", { value: "checkup" }, "Check-up Center"),
-                React.createElement("option", { value: "specialties" }, "Nos spécialités"),
+                React.createElement("option", { value: "specialties" }, "Nos spÃ©cialitÃ©s"),
                 React.createElement("option", { value: "info" }, "Infos patients & visiteurs"),
                 React.createElement("option", { value: "offre" }, "Notre offre de soins"),
                 React.createElement("option", { value: "tarifs" }, "Tarifs hospitaliers"),
                 React.createElement("option", { value: "paiement_facture" }, "Paiement des factures"),
-                React.createElement("option", { value: "topbar" }, "Barre supérieure (numéro d'urgence)")
+                React.createElement("option", { value: "topbar" }, "Barre supÃ©rieure (numÃ©ro d'urgence)")
             ),
             React.createElement("div", { id: "contentEditor", style: { marginBottom: "20px" } },
                 Object.entries(siteContent).map(([key, val]) =>
@@ -1844,13 +1844,13 @@ function AdminDashboard() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ key: selectedPage, contenu: JSON.stringify(updates) })
-                }).then(res => res.ok ? alert("✅ Contenu mis à jour !") : alert("❌ Erreur"));
+                }).then(res => res.ok ? alert("âœ… Contenu mis Ã  jour !") : alert("âŒ Erreur"));
             }, style: { background: "#0b6e8f", color: "white", border: "none", padding: "10px 20px", borderRadius: "25px", cursor: "pointer" } }, "Enregistrer")
         ),
         
-        // ===== ACTUALITÉS =====
+        // ===== ACTUALITÃ‰S =====
         activeTab === "actualites" && React.createElement("div", null,
-            React.createElement("h2", null, "Actualités"),
+            React.createElement("h2", null, "ActualitÃ©s"),
             React.createElement("button", { onClick: () => setShowActuForm(!showActuForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showActuForm ? "-" : "+", " Ajouter"),
             showActuForm && React.createElement("form", { onSubmit: addActualite, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "titre", placeholder: "Titre", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1883,10 +1883,10 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(actu.description)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.image_url ? React.createElement("img", { src: `${MEDIA_BASE}/${actu.image_url}`, style: { width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" } }) : "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.ordre),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.active ? "✅" : "❌"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, actu.active ? "âœ…" : "âŒ"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
-                                React.createElement("button", { onClick: () => { setEditingActu(actu); setEditActuPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                                React.createElement("button", { onClick: () => deleteActualite(actu.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                                React.createElement("button", { onClick: () => { setEditingActu(actu); setEditActuPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                                React.createElement("button", { onClick: () => deleteActualite(actu.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                             )
                         )
                     ))
@@ -1894,10 +1894,10 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MODALE ÉDITION ACTUALITÉ =====
+        // ===== MODALE Ã‰DITION ACTUALITÃ‰ =====
         editingActu && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 } },
             React.createElement("div", { style: { background: "white", padding: "20px", borderRadius: "16px", maxWidth: "500px", width: "90%" } },
-                React.createElement("h3", null, "Modifier l'actualité"),
+                React.createElement("h3", null, "Modifier l'actualitÃ©"),
                 React.createElement("form", { onSubmit: updateActualite },
                     React.createElement("input", { type: "text", name: "titre", defaultValue: editingActu.titre, placeholder: "Titre", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("textarea", { name: "description", defaultValue: editingActu.description, placeholder: "Description", rows: "3", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1927,9 +1927,9 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== SPÉCIALITÉS =====
+        // ===== SPÃ‰CIALITÃ‰S =====
         activeTab === "specialties" && React.createElement("div", null,
-            React.createElement("h2", null, "Spécialités"),
+            React.createElement("h2", null, "SpÃ©cialitÃ©s"),
             React.createElement("button", { onClick: () => setShowSpecialtyForm(!showSpecialtyForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showSpecialtyForm ? "-" : "+", " Ajouter"),
             showSpecialtyForm && React.createElement("form", { onSubmit: addSpecialty, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "name", placeholder: "Nom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -1951,17 +1951,17 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, spec.id),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(spec.name)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(spec.description || "")),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, spec.active ? "✅" : "❌"),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteSpecialty(spec.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"))
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, spec.active ? "âœ…" : "âŒ"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteSpecialty(spec.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸"))
                         )
                     ))
                 )
             )
         ),
         
-        // ===== ÉTABLISSEMENT =====
+        // ===== Ã‰TABLISSEMENT =====
         activeTab === "etablissement" && React.createElement("div", null,
-            React.createElement("h2", null, "🏥 Gestion des photos de l'établissement"),
+            React.createElement("h2", null, "ðŸ¥ Gestion des photos de l'Ã©tablissement"),
             React.createElement("form", { onSubmit: async (e) => {
                 e.preventDefault();
                 const fd = new FormData(e.target);
@@ -1976,7 +1976,7 @@ function AdminDashboard() {
                 if (!uploadData.imageUrl) { alert("Erreur upload"); return; }
                 const payload = { titre, description, image_url: uploadData.imageUrl, active };
                 const res = await fetch(API_BASE + "/etablissement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-                if (res.ok) { showSuccess("Photo ajoutée"); loadEtablissement(); e.target.reset(); }
+                if (res.ok) { showSuccess("Photo ajoutÃ©e"); loadEtablissement(); e.target.reset(); }
                 else alert("Erreur");
             }, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "titre", placeholder: "Titre", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2000,8 +2000,8 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("img", { src: `${MEDIA_BASE}/${photo.image_url}`, style: { width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" } })),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, photo.active ? "Oui" : "Non"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
-                                React.createElement("button", { onClick: () => { setEditingEtablissement(photo); setEditEtabPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                                React.createElement("button", { onClick: () => deleteEtablissement(photo.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                                React.createElement("button", { onClick: () => { setEditingEtablissement(photo); setEditEtabPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                                React.createElement("button", { onClick: () => deleteEtablissement(photo.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                             )
                         )
                     ))
@@ -2009,7 +2009,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MODALE ÉDITION ÉTABLISSEMENT =====
+        // ===== MODALE Ã‰DITION Ã‰TABLISSEMENT =====
         editingEtablissement && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 } },
             React.createElement("div", { style: { background: "white", padding: "20px", borderRadius: "16px", maxWidth: "500px", width: "90%" } },
                 React.createElement("h3", null, "Modifier la photo"),
@@ -2042,7 +2042,7 @@ function AdminDashboard() {
         
         // ===== PARTENAIRES =====
         activeTab === "partenaires" && React.createElement("div", null,
-            React.createElement("h2", null, "🤝 Gestion des partenaires"),
+            React.createElement("h2", null, "ðŸ¤ Gestion des partenaires"),
             React.createElement("form", { onSubmit: async (e) => {
                 e.preventDefault();
                 const fd = new FormData(e.target);
@@ -2058,7 +2058,7 @@ function AdminDashboard() {
                 if (!uploadData.imageUrl) { alert("Erreur upload"); return; }
                 const payload = { nom, description, image_url: uploadData.imageUrl, commentaire, active };
                 const res = await fetch(API_BASE + "/partenaires", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-                if (res.ok) { showSuccess("Partenaire ajouté"); loadPartenaires(); e.target.reset(); }
+                if (res.ok) { showSuccess("Partenaire ajoutÃ©"); loadPartenaires(); e.target.reset(); }
                 else alert("Erreur");
             }, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "nom", placeholder: "Nom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2085,8 +2085,8 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(p.commentaire || "-")),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.active ? "Oui" : "Non"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
-                                React.createElement("button", { onClick: () => { setEditingPartenaire(p); setEditPartPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                                React.createElement("button", { onClick: () => deletePartenaire(p.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                                React.createElement("button", { onClick: () => { setEditingPartenaire(p); setEditPartPreview(null); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                                React.createElement("button", { onClick: () => deletePartenaire(p.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                             )
                         )
                     ))
@@ -2094,7 +2094,7 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MODALE ÉDITION PARTENAIRE =====
+        // ===== MODALE Ã‰DITION PARTENAIRE =====
         editingPartenaire && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 } },
             React.createElement("div", { style: { background: "white", padding: "20px", borderRadius: "16px", maxWidth: "500px", width: "90%" } },
                 React.createElement("h3", null, "Modifier le partenaire"),
@@ -2128,33 +2128,33 @@ function AdminDashboard() {
         
         // ===== NEWSLETTER =====
         activeTab === "newsletter" && React.createElement("div", null,
-            React.createElement("h2", null, "📧 Newsletter"),
-            React.createElement("p", null, "Total abonnés actifs : ", React.createElement("strong", null, newsletterCount)),
-            React.createElement("button", { onClick: exportEmails, style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, "📎 Exporter les emails (CSV)"),
-            React.createElement("h3", null, "✉️ Envoyer une newsletter"),
+            React.createElement("h2", null, "ðŸ“§ Newsletter"),
+            React.createElement("p", null, "Total abonnÃ©s actifs : ", React.createElement("strong", null, newsletterCount)),
+            React.createElement("button", { onClick: exportEmails, style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, "ðŸ“Ž Exporter les emails (CSV)"),
+            React.createElement("h3", null, "âœ‰ï¸ Envoyer une newsletter"),
             React.createElement("form", { onSubmit: sendNewsletter, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px" } },
                 React.createElement("input", { type: "text", name: "subject", placeholder: "Sujet", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("textarea", { name: "content", placeholder: "Contenu (HTML accepté)", rows: "5", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "📨 Envoyer")
+                React.createElement("textarea", { name: "content", placeholder: "Contenu (HTML acceptÃ©)", rows: "5", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "ðŸ“¨ Envoyer")
             )
         ),
         
         // ===== FOOTER =====
         activeTab === "footer" && React.createElement("div", null,
-            React.createElement("h2", null, "✏️ Gestion du pied de page (multi-colonnes)"),
+            React.createElement("h2", null, "âœï¸ Gestion du pied de page (multi-colonnes)"),
             React.createElement("form", { onSubmit: saveFooter, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px" } },
-                React.createElement("h3", null, "Coordonnées"),
-                React.createElement("label", null, "Nom de l'établissement :"),
+                React.createElement("h3", null, "CoordonnÃ©es"),
+                React.createElement("label", null, "Nom de l'Ã©tablissement :"),
                 React.createElement("input", { type: "text", name: "etablissement", defaultValue: footerContent.etablissement || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("label", null, "Adresse :"),
                 React.createElement("input", { type: "text", name: "adresse", defaultValue: footerContent.adresse || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("label", null, "Téléphone principal :"),
+                React.createElement("label", null, "TÃ©lÃ©phone principal :"),
                 React.createElement("input", { type: "text", name: "telephone", defaultValue: footerContent.telephone || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("label", null, "Téléphone secondaire :"),
+                React.createElement("label", null, "TÃ©lÃ©phone secondaire :"),
                 React.createElement("input", { type: "text", name: "telephone2", defaultValue: footerContent.telephone2 || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("label", null, "Email de contact :"),
                 React.createElement("input", { type: "email", name: "email", defaultValue: footerContent.email || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("label", null, "Numéro d'urgence :"),
+                React.createElement("label", null, "NumÃ©ro d'urgence :"),
                 React.createElement("input", { type: "text", name: "urgences", defaultValue: footerContent.urgences || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 
                 React.createElement("h3", null, "Bloc : Aide et information (une ligne par lien, format texte|url)"),
@@ -2166,16 +2166,16 @@ function AdminDashboard() {
                 React.createElement("h3", null, "Bloc : Pour les soignants"),
                 React.createElement("textarea", { name: "liens_soignants", defaultValue: footerContent.liens_soignants || "", rows: "6", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 
-                React.createElement("h3", null, "Bloc : Trouvez votre spécialiste"),
+                React.createElement("h3", null, "Bloc : Trouvez votre spÃ©cialiste"),
                 React.createElement("textarea", { name: "liens_specialistes", defaultValue: footerContent.liens_specialistes || "", rows: "8", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 
-                React.createElement("h3", null, "Bloc : Recherches fréquentes"),
+                React.createElement("h3", null, "Bloc : Recherches frÃ©quentes"),
                 React.createElement("textarea", { name: "liens_recherches", defaultValue: footerContent.liens_recherches || "", rows: "6", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 
-                React.createElement("h3", null, "Dernières technologies MCE (une par ligne)"),
+                React.createElement("h3", null, "DerniÃ¨res technologies MCE (une par ligne)"),
                 React.createElement("textarea", { name: "technologies", defaultValue: footerContent.technologies || "", rows: "4", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 
-                React.createElement("h3", null, "Réseaux sociaux (icônes Font Awesome séparées par des virgules)"),
+                React.createElement("h3", null, "RÃ©seaux sociaux (icÃ´nes Font Awesome sÃ©parÃ©es par des virgules)"),
                 React.createElement("input", { type: "text", name: "reseaux", defaultValue: footerContent.reseaux || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 
                 React.createElement("h3", null, "Copyright"),
@@ -2187,7 +2187,7 @@ function AdminDashboard() {
         
         // ===== TARIFS =====
         activeTab === "tarifs" && React.createElement("div", null,
-            React.createElement("h2", null, "💰 Gestion des tarifs"),
+            React.createElement("h2", null, "ðŸ’° Gestion des tarifs"),
             React.createElement("form", { onSubmit: addTarif, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
                 React.createElement("input", { type: "text", name: "service", placeholder: "Service", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "text", name: "prestation", placeholder: "Prestation", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2212,7 +2212,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(t.prestation)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(t.prix)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, t.active ? "Oui" : "Non"),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteTarif(t.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️"))
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => deleteTarif(t.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸"))
                         )
                     ))
                 )
@@ -2221,30 +2221,30 @@ function AdminDashboard() {
         
         // ===== CAISSE =====
         activeTab === "caisse" && React.createElement("div", null,
-            React.createElement("h2", null, "💰 Historique des paiements"),
+            React.createElement("h2", null, "ðŸ’° Historique des paiements"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
                             React.createElement("th", null, "ID"), React.createElement("th", null, "Client"), React.createElement("th", null, "Montant"),
-                            React.createElement("th", null, "Méthode"), React.createElement("th", null, "Statut"), React.createElement("th", null, "Code"), React.createElement("th", null, "Date"), React.createElement("th", null, "Facture")
+                            React.createElement("th", null, "MÃ©thode"), React.createElement("th", null, "Statut"), React.createElement("th", null, "Code"), React.createElement("th", null, "Date"), React.createElement("th", null, "Facture")
                         )
                     ),
                     React.createElement("tbody", null, paiements.map(p =>
                         React.createElement("tr", { key: p.id },
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.id),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(p.nom_client || "-")),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.montant + " €"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.montant + " â‚¬"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.methode === "mobile_money" ? "Mobile Money" : "Carte"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd", color: p.statut === "confirme" ? "green" : "orange" } }, p.statut),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.code_confirmation || "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, new Date(p.date_paiement).toLocaleString()),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.facture_url ? React.createElement("a", { href: p.facture_url, target: "_blank", style: { color: "#0b6e8f" } }, "📄 Facture") : "-")
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, p.facture_url ? React.createElement("a", { href: p.facture_url, target: "_blank", style: { color: "#0b6e8f" } }, "ðŸ“„ Facture") : "-")
                         )
                     ))
                 )
             ),
-            React.createElement("h3", null, "⚙️ Configuration des moyens de paiement"),
+            React.createElement("h3", null, "âš™ï¸ Configuration des moyens de paiement"),
             React.createElement("form", { onSubmit: savePaymentConfig, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginTop: "20px" } },
                 React.createElement("label", null, "IBAN :"), React.createElement("input", { type: "text", name: "iban", defaultValue: paymentConfig.iban || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("label", null, "BIC :"), React.createElement("input", { type: "text", name: "bic", defaultValue: paymentConfig.bic || "", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2257,7 +2257,7 @@ function AdminDashboard() {
         
         // ===== PAIEMENTS MANUELS =====
         activeTab === "paiements-manuels" && React.createElement("div", null,
-            React.createElement("h2", null, "📋 Demandes de paiement manuel"),
+            React.createElement("h2", null, "ðŸ“‹ Demandes de paiement manuel"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
@@ -2265,9 +2265,9 @@ function AdminDashboard() {
                             React.createElement("th", null, "ID"),
                             React.createElement("th", null, "Nom"),
                             React.createElement("th", null, "Email"),
-                            React.createElement("th", null, "Téléphone"),
+                            React.createElement("th", null, "TÃ©lÃ©phone"),
                             React.createElement("th", null, "Montant"),
-                            React.createElement("th", null, "Méthode"),
+                            React.createElement("th", null, "MÃ©thode"),
                             React.createElement("th", null, "Preuve"),
                             React.createElement("th", null, "Statut"),
                             React.createElement("th", null, "Commentaire"),
@@ -2281,11 +2281,11 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px" } }, escapeHtml(p.nom)),
                             React.createElement("td", { style: { padding: "8px" } }, escapeHtml(p.email)),
                             React.createElement("td", { style: { padding: "8px" } }, escapeHtml(p.telephone || "-")),
-                            React.createElement("td", { style: { padding: "8px" } }, p.montant ? p.montant + " €" : "-"),
+                            React.createElement("td", { style: { padding: "8px" } }, p.montant ? p.montant + " â‚¬" : "-"),
                             React.createElement("td", { style: { padding: "8px" } }, p.methode === "mobile_money" ? "Mobile Money" : "Virement"),
                             React.createElement("td", { style: { padding: "8px" } },
                                 p.preuve_url ?
-                                    React.createElement("a", { href: preuveUrl, target: "_blank", style: { color: "#0b6e8f", textDecoration: "underline" } }, "📄 Voir la preuve") :
+                                    React.createElement("a", { href: preuveUrl, target: "_blank", style: { color: "#0b6e8f", textDecoration: "underline" } }, "ðŸ“„ Voir la preuve") :
                                     "-"
                             ),
                             React.createElement("td", { style: { padding: "8px" } }, p.statut || "en_attente"),
@@ -2297,15 +2297,15 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== RÉSULTATS LABO =====
+        // ===== RÃ‰SULTATS LABO =====
         activeTab === "results" && React.createElement("div", null,
-            React.createElement("h2", null, "🔬 Résultats en attente de publication"),
+            React.createElement("h2", null, "ðŸ”¬ RÃ©sultats en attente de publication"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
                             React.createElement("th", null, "ID"), React.createElement("th", null, "Patient"), React.createElement("th", null, "Type"),
-                            React.createElement("th", null, "Description"), React.createElement("th", null, "Fichier"), React.createElement("th", null, "Date création"), React.createElement("th", null, "Action")
+                            React.createElement("th", null, "Description"), React.createElement("th", null, "Fichier"), React.createElement("th", null, "Date crÃ©ation"), React.createElement("th", null, "Action")
                         )
                     ),
                     React.createElement("tbody", null, pendingResults.map(r =>
@@ -2314,14 +2314,14 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(r.first_name + " " + r.last_name)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(r.type)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(r.description || "-")),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, r.file_url ? React.createElement("a", { href: r.file_url, target: "_blank", style: { color: "#0b6e8f" } }, "📄 Fichier") : "-"),
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, r.file_url ? React.createElement("a", { href: r.file_url, target: "_blank", style: { color: "#0b6e8f" } }, "ðŸ“„ Fichier") : "-"),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, new Date(r.created_at).toLocaleString()),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, React.createElement("button", { onClick: () => publishResult(r.id), style: { background: "#28a745", color: "white", border: "none", padding: "4px 12px", borderRadius: "20px", cursor: "pointer" } }, "Publier"))
                         )
                     ))
                 )
             ),
-            React.createElement("h3", null, "➕ Ajouter un résultat"),
+            React.createElement("h3", null, "âž• Ajouter un rÃ©sultat"),
             React.createElement("form", { onSubmit: addResult, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginTop: "20px" } },
                 React.createElement("select", { name: "patient_id", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } },
                     React.createElement("option", { value: "" }, "-- Choisir un patient --"),
@@ -2336,13 +2336,13 @@ function AdminDashboard() {
         
         // ===== PATIENTS =====
         activeTab === "patients" && React.createElement("div", null,
-            React.createElement("h2", null, "👥 Gestion des patients"),
+            React.createElement("h2", null, "ðŸ‘¥ Gestion des patients"),
             React.createElement("button", { onClick: () => setShowPatientForm(!showPatientForm), style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer", marginBottom: "20px" } }, showPatientForm ? "-" : "+", " Ajouter"),
             showPatientForm && React.createElement("form", { onSubmit: addPatient, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
-                React.createElement("input", { type: "text", name: "first_name", placeholder: "Prénom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "text", name: "first_name", placeholder: "PrÃ©nom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "text", name: "last_name", placeholder: "Nom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "email", name: "email", placeholder: "Email", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("input", { type: "tel", name: "phone", placeholder: "Téléphone", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "tel", name: "phone", placeholder: "TÃ©lÃ©phone", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "password", name: "password", placeholder: "Mot de passe", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Ajouter")
             ),
@@ -2350,8 +2350,8 @@ function AdminDashboard() {
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
-                            React.createElement("th", null, "ID"), React.createElement("th", null, "Prénom"), React.createElement("th", null, "Nom"),
-                            React.createElement("th", null, "Email"), React.createElement("th", null, "Téléphone"), React.createElement("th", null, "Date d'inscription"),
+                            React.createElement("th", null, "ID"), React.createElement("th", null, "PrÃ©nom"), React.createElement("th", null, "Nom"),
+                            React.createElement("th", null, "Email"), React.createElement("th", null, "TÃ©lÃ©phone"), React.createElement("th", null, "Date d'inscription"),
                             React.createElement("th", null, "Statut"), React.createElement("th", null, "Actions")
                         )
                     ),
@@ -2378,8 +2378,8 @@ function AdminDashboard() {
                                 }, p.is_active ? "Actif" : "Inactif")
                             ),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, 
-                                React.createElement("button", { onClick: () => setEditingPatient(p), style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                                React.createElement("button", { onClick: () => deletePatient(p.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                                React.createElement("button", { onClick: () => setEditingPatient(p), style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                                React.createElement("button", { onClick: () => deletePatient(p.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                             )
                         )
                     ))
@@ -2387,16 +2387,16 @@ function AdminDashboard() {
             )
         ),
         
-        // ===== MODALE ÉDITION PATIENT =====
+        // ===== MODALE Ã‰DITION PATIENT =====
         editingPatient && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 } },
             React.createElement("div", { style: { background: "white", padding: "20px", borderRadius: "16px", maxWidth: "500px", width: "90%" } },
                 React.createElement("h3", null, "Modifier le patient"),
                 React.createElement("form", { onSubmit: updatePatient },
-                    React.createElement("input", { type: "text", name: "first_name", defaultValue: editingPatient.first_name, placeholder: "Prénom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                    React.createElement("input", { type: "text", name: "first_name", defaultValue: editingPatient.first_name, placeholder: "PrÃ©nom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("input", { type: "text", name: "last_name", defaultValue: editingPatient.last_name, placeholder: "Nom", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("input", { type: "email", name: "email", defaultValue: editingPatient.email, placeholder: "Email", required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                    React.createElement("input", { type: "tel", name: "phone", defaultValue: editingPatient.phone || "", placeholder: "Téléphone", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                    React.createElement("input", { type: "password", name: "password", placeholder: "Nouveau mot de passe (laisser vide pour inchangé)", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                    React.createElement("input", { type: "tel", name: "phone", defaultValue: editingPatient.phone || "", placeholder: "TÃ©lÃ©phone", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                    React.createElement("input", { type: "password", name: "password", placeholder: "Nouveau mot de passe (laisser vide pour inchangÃ©)", style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                     React.createElement("label", { style: { display: "block", marginBottom: "8px" } },
                         React.createElement("input", { type: "checkbox", name: "is_active", defaultChecked: editingPatient.is_active === 1 }),
                         " Compte actif"
@@ -2411,13 +2411,13 @@ function AdminDashboard() {
         
         // ===== MESSAGES =====
         activeTab === "messages" && React.createElement("div", null,
-            React.createElement("h2", null, "📩 Messages reçus"),
+            React.createElement("h2", null, "ðŸ“© Messages reÃ§us"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
                         React.createElement("tr", { style: { background: "#0b6e8f", color: "white" } },
                             React.createElement("th", null, "ID"),
-                            React.createElement("th", null, "Expéditeur"),
+                            React.createElement("th", null, "ExpÃ©diteur"),
                             React.createElement("th", null, "Nom"),
                             React.createElement("th", null, "Sujet"),
                             React.createElement("th", null, "Message"),
@@ -2433,46 +2433,46 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, escapeHtml(msg.subject || "-")),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd", maxWidth: "200px", wordWrap: "break-word" } }, escapeHtml(msg.message)),
                             React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, new Date(msg.sent_date).toLocaleString()),
-                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, msg.is_read ? "✅" : "❌")
+                            React.createElement("td", { style: { padding: "8px", borderBottom: "1px solid #ddd" } }, msg.is_read ? "âœ…" : "âŒ")
                         )
                     ))
                 )
             )
         ),
 
-        // ===== SALLES DE RÉUNION =====
+        // ===== SALLES DE RÃ‰UNION =====
         activeTab === "rooms" && React.createElement("div", null,
-            React.createElement("h2", null, "🏢 Salles de réunion"),
+            React.createElement("h2", null, "ðŸ¢ Salles de rÃ©union"),
             React.createElement("form", { onSubmit: editingRoom ? updateRoom : createRoom, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
-                React.createElement("h4", null, editingRoom ? "Modifier la salle" : "➕ Ajouter une salle"),
+                React.createElement("h4", null, editingRoom ? "Modifier la salle" : "âž• Ajouter une salle"),
                 React.createElement("input", { type: "text", placeholder: "Nom", value: roomForm.name, onChange: e => setRoomForm({...roomForm, name: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("input", { type: "number", placeholder: "Capacité", value: roomForm.capacity, onChange: e => setRoomForm({...roomForm, capacity: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
-                React.createElement("input", { type: "text", placeholder: "Équipement", value: roomForm.equipment, onChange: e => setRoomForm({...roomForm, equipment: e.target.value}), style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "number", placeholder: "CapacitÃ©", value: roomForm.capacity, onChange: e => setRoomForm({...roomForm, capacity: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
+                React.createElement("input", { type: "text", placeholder: "Ã‰quipement", value: roomForm.equipment, onChange: e => setRoomForm({...roomForm, equipment: e.target.value}), style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("label", null,
                     React.createElement("input", { type: "checkbox", checked: roomForm.has_video, onChange: e => setRoomForm({...roomForm, has_video: e.target.checked}) }),
-                    " Vidéoconférence"
+                    " VidÃ©oconfÃ©rence"
                 ),
                 React.createElement("br", null),
-                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, editingRoom ? "Mettre à jour" : "Ajouter"),
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, editingRoom ? "Mettre Ã  jour" : "Ajouter"),
                 editingRoom && React.createElement("button", { type: "button", onClick: () => { setEditingRoom(null); setRoomForm({ name: '', capacity: '', equipment: '', has_video: false }); }, style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Annuler"),
-                roomsFeedback && React.createElement("div", { style: { marginTop: "10px", color: roomsFeedback.includes("✅") ? "green" : "red" } }, roomsFeedback)
+                roomsFeedback && React.createElement("div", { style: { marginTop: "10px", color: roomsFeedback.includes("âœ…") ? "green" : "red" } }, roomsFeedback)
             ),
             React.createElement("h3", null, "Liste des salles"),
             React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" } },
                 rooms.map(room =>
                     React.createElement("div", { key: room.id, style: { border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", minWidth: "150px" } },
                         React.createElement("h4", null, room.name),
-                        React.createElement("p", null, "Capacité: ", room.capacity),
+                        React.createElement("p", null, "CapacitÃ©: ", room.capacity),
                         React.createElement("p", null, room.equipment || "-"),
-                        room.has_video && React.createElement("span", { style: { color: "#2ec4b6" } }, "📹"),
+                        room.has_video && React.createElement("span", { style: { color: "#2ec4b6" } }, "ðŸ“¹"),
                         React.createElement("div", { style: { marginTop: "8px" } },
-                            React.createElement("button", { onClick: () => { setEditingRoom(room); setRoomForm({ name: room.name, capacity: room.capacity, equipment: room.equipment || '', has_video: room.has_video }); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                            React.createElement("button", { onClick: () => deleteRoom(room.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                            React.createElement("button", { onClick: () => { setEditingRoom(room); setRoomForm({ name: room.name, capacity: room.capacity, equipment: room.equipment || '', has_video: room.has_video }); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                            React.createElement("button", { onClick: () => deleteRoom(room.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                         )
                     )
                 )
             ),
-            React.createElement("h3", null, "📅 Réservations de toutes les salles"),
+            React.createElement("h3", null, "ðŸ“… RÃ©servations de toutes les salles"),
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                     React.createElement("thead", null,
@@ -2481,7 +2481,7 @@ function AdminDashboard() {
                             React.createElement("th", null, "Titre"),
                             React.createElement("th", null, "Date"),
                             React.createElement("th", null, "Heure"),
-                            React.createElement("th", null, "Réservé par"),
+                            React.createElement("th", null, "RÃ©servÃ© par"),
                             React.createElement("th", null, "Lien")
                         )
                     ),
@@ -2492,7 +2492,7 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px" } }, b.date),
                             React.createElement("td", { style: { padding: "8px" } }, b.start_time + "-" + b.end_time),
                             React.createElement("td", { style: { padding: "8px" } }, b.booked_by_name || b.booked_by),
-                            React.createElement("td", { style: { padding: "8px" } }, b.meeting_link && React.createElement("a", { href: b.meeting_link, target: "_blank", style: { color: "#0b6e8f" } }, "🔗"))
+                            React.createElement("td", { style: { padding: "8px" } }, b.meeting_link && React.createElement("a", { href: b.meeting_link, target: "_blank", style: { color: "#0b6e8f" } }, "ðŸ”—"))
                         )
                     ))
                 )
@@ -2501,9 +2501,9 @@ function AdminDashboard() {
 
         // ===== PERSONNEL HOSPITALIER =====
         activeTab === "staff" && React.createElement("div", null,
-            React.createElement("h2", null, "👥 Personnel hospitalier"),
+            React.createElement("h2", null, "ðŸ‘¥ Personnel hospitalier"),
             React.createElement("form", { onSubmit: editingStaff ? updateStaff : createStaff, style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" } },
-                React.createElement("h4", null, editingStaff ? "Modifier un compte" : "➕ Ajouter un compte"),
+                React.createElement("h4", null, editingStaff ? "Modifier un compte" : "âž• Ajouter un compte"),
                 React.createElement("input", { type: "text", placeholder: "Nom complet", value: staffForm.name, onChange: e => setStaffForm({...staffForm, name: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "email", placeholder: "Email", value: staffForm.email, onChange: e => setStaffForm({...staffForm, email: e.target.value}), required: true, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
                 React.createElement("input", { type: "password", placeholder: "Mot de passe", value: staffForm.password, onChange: e => setStaffForm({...staffForm, password: e.target.value}), required: !editingStaff, style: { width: "100%", marginBottom: "8px", padding: "8px" } }),
@@ -2511,9 +2511,9 @@ function AdminDashboard() {
                     React.createElement("option", { value: "staff" }, "Personnel"),
                     React.createElement("option", { value: "admin" }, "Administrateur")
                 ),
-                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, editingStaff ? "Mettre à jour" : "Ajouter"),
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, editingStaff ? "Mettre Ã  jour" : "Ajouter"),
                 editingStaff && React.createElement("button", { type: "button", onClick: () => { setEditingStaff(null); setStaffForm({ name: '', email: '', password: '', role: 'staff' }); }, style: { marginLeft: "10px", background: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" } }, "Annuler"),
-                staffFeedback && React.createElement("div", { style: { marginTop: "10px", color: staffFeedback.includes("✅") ? "green" : "red" } }, staffFeedback)
+                staffFeedback && React.createElement("div", { style: { marginTop: "10px", color: staffFeedback.includes("âœ…") ? "green" : "red" } }, staffFeedback)
             ),
             React.createElement("h3", null, "Liste du personnel"),
             React.createElement("div", { style: { overflowX: "auto" } },
@@ -2523,7 +2523,7 @@ function AdminDashboard() {
                             React.createElement("th", null, "ID"),
                             React.createElement("th", null, "Nom"),
                             React.createElement("th", null, "Email"),
-                            React.createElement("th", null, "Rôle"),
+                            React.createElement("th", null, "RÃ´le"),
                             React.createElement("th", null, "Actions")
                         )
                     ),
@@ -2534,8 +2534,8 @@ function AdminDashboard() {
                             React.createElement("td", { style: { padding: "8px" } }, escapeHtml(s.email)),
                             React.createElement("td", { style: { padding: "8px" } }, s.role || "staff"),
                             React.createElement("td", { style: { padding: "8px" } },
-                                React.createElement("button", { onClick: () => { setEditingStaff(s); setStaffForm({ name: s.name, email: s.email, password: '', role: s.role || 'staff' }); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "✏️"),
-                                React.createElement("button", { onClick: () => deleteStaff(s.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "🗑️")
+                                React.createElement("button", { onClick: () => { setEditingStaff(s); setStaffForm({ name: s.name, email: s.email, password: '', role: s.role || 'staff' }); }, style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer" } }, "âœï¸"),
+                                React.createElement("button", { onClick: () => deleteStaff(s.id), style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer" } }, "ðŸ—‘ï¸")
                             )
                         )
                     ))
@@ -2545,11 +2545,11 @@ function AdminDashboard() {
 
         // ===== INFOS PATIENTS =====
         activeTab === "infos-patients" && React.createElement("div", null,
-            React.createElement("h2", null, "📋 Informations patients & visiteurs"),
-            React.createElement("p", { style: { color: "#6c757d" } }, "Modifiez les informations affichées sur la page 'Infos patients'."),
+            React.createElement("h2", null, "ðŸ“‹ Informations patients & visiteurs"),
+            React.createElement("p", { style: { color: "#6c757d" } }, "Modifiez les informations affichÃ©es sur la page 'Infos patients'."),
             React.createElement("form", { onSubmit: (e) => { e.preventDefault(); saveInfoPatients(); }, style: { display: "flex", flexDirection: "column", gap: "1rem" } },
                 React.createElement("div", null,
-                    React.createElement("label", { style: { fontWeight: "bold" } }, "🕒 Horaires de visite"),
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "ðŸ•’ Horaires de visite"),
                     React.createElement("textarea", {
                         value: infoPatientsContent.horaires || '',
                         onChange: e => setInfoPatientsContent({...infoPatientsContent, horaires: e.target.value}),
@@ -2558,7 +2558,7 @@ function AdminDashboard() {
                     })
                 ),
                 React.createElement("div", null,
-                    React.createElement("label", { style: { fontWeight: "bold" } }, "🍽️ Suggestions de repas"),
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "ðŸ½ï¸ Suggestions de repas"),
                     React.createElement("textarea", {
                         value: infoPatientsContent.repas || '',
                         onChange: e => setInfoPatientsContent({...infoPatientsContent, repas: e.target.value}),
@@ -2567,7 +2567,7 @@ function AdminDashboard() {
                     })
                 ),
                 React.createElement("div", null,
-                    React.createElement("label", { style: { fontWeight: "bold" } }, "🚗 Accès et parking"),
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "ðŸš— AccÃ¨s et parking"),
                     React.createElement("textarea", {
                         value: infoPatientsContent.parking || '',
                         onChange: e => setInfoPatientsContent({...infoPatientsContent, parking: e.target.value}),
@@ -2576,7 +2576,7 @@ function AdminDashboard() {
                     })
                 ),
                 React.createElement("div", null,
-                    React.createElement("label", { style: { fontWeight: "bold" } }, "🛡️ Règles et recommandations"),
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "ðŸ›¡ï¸ RÃ¨gles et recommandations"),
                     React.createElement("textarea", {
                         value: infoPatientsContent.regles || '',
                         onChange: e => setInfoPatientsContent({...infoPatientsContent, regles: e.target.value}),
@@ -2585,7 +2585,7 @@ function AdminDashboard() {
                     })
                 ),
                 React.createElement("div", null,
-                    React.createElement("label", { style: { fontWeight: "bold" } }, "📞 Contacts utiles"),
+                    React.createElement("label", { style: { fontWeight: "bold" } }, "ðŸ“ž Contacts utiles"),
                     React.createElement("textarea", {
                         value: infoPatientsContent.contact || '',
                         onChange: e => setInfoPatientsContent({...infoPatientsContent, contact: e.target.value}),
@@ -2593,16 +2593,16 @@ function AdminDashboard() {
                         style: { width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }
                     })
                 ),
-                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "10px 20px", borderRadius: "25px", cursor: "pointer", alignSelf: "flex-start" } }, "💾 Enregistrer")
+                React.createElement("button", { type: "submit", style: { background: "#0b6e8f", color: "white", border: "none", padding: "10px 20px", borderRadius: "25px", cursor: "pointer", alignSelf: "flex-start" } }, "ðŸ’¾ Enregistrer")
             ),
             infoPatientsLoading && React.createElement("p", null, "Chargement...")
         ),
 
-        // ===== JOUR D'OUVERTURE =====
+        // ===== ðŸŽ‰ JOUR D'OUVERTURE =====
         activeTab === "jour-ouverture" && React.createElement("div", null,
-            React.createElement("h2", null, "🎉 Jour d'ouverture de l'hôpital"),
+            React.createElement("h2", null, "ðŸŽ‰ Jour d'ouverture de l'hÃ´pital"),
             React.createElement("p", { style: { color: "#6c757d" } },
-                "Ajoutez des photos et vidéos de l'inauguration du MCE. Ils s'afficheront automatiquement sur la page d'accueil."
+                "Ajoutez des photos et vidÃ©os de l'inauguration du MCE. Ils s'afficheront automatiquement sur la page d'accueil."
             ),
 
             // FORMULAIRE
@@ -2610,17 +2610,17 @@ function AdminDashboard() {
                 onSubmit: editingJour ? updateJourOuverture : addJourOuverture,
                 style: { background: "#f1f9fe", padding: "15px", borderRadius: "12px", marginBottom: "20px" }
             },
-                React.createElement("h4", null, editingJour ? "✏️ Modifier le média" : "➕ Ajouter un média"),
+                React.createElement("h4", null, editingJour ? "âœï¸ Modifier le mÃ©dia" : "âž• Ajouter un mÃ©dia"),
 
-                React.createElement("label", { style: { fontWeight: "bold" } }, "Type de média :"),
+                React.createElement("label", { style: { fontWeight: "bold" } }, "Type de mÃ©dia :"),
                 React.createElement("select", {
                     name: "type",
                     value: jourForm.type,
                     onChange: e => setJourForm({ ...jourForm, type: e.target.value }),
                     style: { width: "100%", marginBottom: "8px", padding: "8px" }
                 },
-                    React.createElement("option", { value: "photo" }, "📷 Photo"),
-                    React.createElement("option", { value: "video" }, "🎥 Vidéo")
+                    React.createElement("option", { value: "photo" }, "ðŸ“· Photo"),
+                    React.createElement("option", { value: "video" }, "ðŸŽ¥ VidÃ©o")
                 ),
 
                 React.createElement("input", {
@@ -2642,7 +2642,7 @@ function AdminDashboard() {
                 }),
 
                 editingJour && React.createElement("div", { style: { marginBottom: "8px" } },
-                    React.createElement("label", null, "Média actuel : "),
+                    React.createElement("label", null, "MÃ©dia actuel : "),
                     editingJour.type === 'video'
                         ? React.createElement("video", {
                             src: `${MEDIA_BASE}/${editingJour.url}`,
@@ -2672,7 +2672,7 @@ function AdminDashboard() {
                 jourPreview && React.createElement("div", { style: { marginBottom: "8px" } },
                     jourPreview.type === 'video'
                         ? React.createElement("video", { src: jourPreview.url, style: { width: "160px", borderRadius: "8px" }, muted: true, controls: true })
-                        : React.createElement("img", { src: jourPreview.url, style: { width: "120px", borderRadius: "8px" }, alt: "Aperçu" })
+                        : React.createElement("img", { src: jourPreview.url, style: { width: "120px", borderRadius: "8px" }, alt: "AperÃ§u" })
                 ),
 
                 React.createElement("label", null,
@@ -2684,7 +2684,7 @@ function AdminDashboard() {
                 React.createElement("button", {
                     type: "submit",
                     style: { marginTop: "10px", background: "#0b6e8f", color: "white", border: "none", padding: "8px 16px", borderRadius: "25px", cursor: "pointer" }
-                }, editingJour ? "Mettre à jour" : "Ajouter"),
+                }, editingJour ? "Mettre Ã  jour" : "Ajouter"),
 
                 editingJour && React.createElement("button", {
                     type: "button",
@@ -2697,14 +2697,14 @@ function AdminDashboard() {
                 }, "Annuler"),
 
                 jourFeedback && React.createElement("div", {
-                    style: { marginTop: "10px", color: jourFeedback.includes("✅") ? "green" : jourFeedback.includes("⏳") ? "#0b6e8f" : "red" }
+                    style: { marginTop: "10px", color: jourFeedback.includes("âœ…") ? "green" : jourFeedback.includes("â³") ? "#0b6e8f" : "red" }
                 }, jourFeedback)
             ),
 
-            // LISTE DES MÉDIAS
-            React.createElement("h3", null, "📸 Médias enregistrés"),
+            // LISTE DES MÃ‰DIAS
+            React.createElement("h3", null, "ðŸ“¸ MÃ©dias enregistrÃ©s"),
             jourOuverture.length === 0
-                ? React.createElement("p", null, "Aucun média pour le moment.")
+                ? React.createElement("p", null, "Aucun mÃ©dia pour le moment.")
                 : React.createElement("div", {
                     style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "15px" }
                 },
@@ -2735,15 +2735,15 @@ function AdminDashboard() {
 
                             React.createElement("div", { style: { padding: "10px" } },
                                 React.createElement("h4", { style: { margin: "0 0 5px 0" } },
-                                    isVideo ? "🎥 " : "📷 ",
+                                    isVideo ? "ðŸŽ¥ " : "ðŸ“· ",
                                     escapeHtml(m.titre || "Sans titre")
                                 ),
                                 React.createElement("p", { style: { fontSize: "0.85rem", color: "#666", margin: "0 0 5px 0" } },
                                     escapeHtml(m.description || "")
                                 ),
                                 React.createElement("p", { style: { fontSize: "0.8rem", color: "#999", margin: 0 } },
-                                    "Ordre : ", m.ordre, " · ",
-                                    (m.active === 1 || m.active === true) ? "✅ Actif" : "❌ Inactif"
+                                    "Ordre : ", m.ordre, " Â· ",
+                                    (m.active === 1 || m.active === true) ? "âœ… Actif" : "âŒ Inactif"
                                 ),
 
                                 React.createElement("div", { style: { marginTop: "8px", display: "flex", gap: "8px" } },
@@ -2760,11 +2760,11 @@ function AdminDashboard() {
                                             setJourPreview(null);
                                         },
                                         style: { color: "#ffc107", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }
-                                    }, "✏️"),
+                                    }, "âœï¸"),
                                     React.createElement("button", {
                                         onClick: () => deleteJourOuverture(m.id),
                                         style: { color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }
-                                    }, "🗑️")
+                                    }, "ðŸ—‘ï¸")
                                 )
                             )
                         );
@@ -2772,7 +2772,7 @@ function AdminDashboard() {
                 )
         ),
         
-        React.createElement("div", { className: "footer", style: { marginTop: "20px", textAlign: "center", color: "#6c757d" } }, React.createElement("p", null, "🔒 Accès sécurisé réservé au personnel autorisé"))
+        React.createElement("div", { className: "footer", style: { marginTop: "20px", textAlign: "center", color: "#6c757d" } }, React.createElement("p", null, "ðŸ”’ AccÃ¨s sÃ©curisÃ© rÃ©servÃ© au personnel autorisÃ©"))
     );
 }
 
